@@ -10,207 +10,177 @@
 -- state 3 = ship data out
 -- state 4 = wait for data to be read out
 
-LIBRARY ieee;
-USE ieee.std_logic_1164.all;
-USE ieee.numeric_std.all;
-use work.Isolation_Flagging_Package.all;
-USE IEEE.STD_LOGIC_ARITH.ALL;
-use IEEE.STD_LOGIC_UNSIGNED.ALL;
-USE work.Detector_Constant_Declaration.all;
+library ieee;
+use ieee.std_logic_1164.all;
+use ieee.numeric_std.all;
+use ieee.std_logic_arith.all;
+use ieee.std_logic_unsigned.all;
+use work.isolation_flagging_package.all;
+use work.detector_constant_declaration.all;
 
 
-ENTITY Data_Processor IS
-  port(
+entity data_processor is
+port(
+    	-- Common control signals
+	clk, rst		: IN    std_logic;
     
-    -- Common control signals
-    rst		: IN    std_logic; --rst
-    clk	  : IN    std_logic; --clk
-    
-    -- Data transfer
-    data_in        : IN 	dataTrain; --data_in
-    data_out       : OUT 	dataTrain; --data_out
-    data_size_in   : IN   std_logic_vector(DATA_SIZE_MAX_BIT - 1 downto 0);
-    data_size_out  : OUT  std_logic_vector(DATA_SIZE_MAX_BIT - 1 downto 0);
+    	-- Data transfer
+    	data_in       		: IN 	dataTrain; --data_in
+    	data_out       		: OUT 	dataTrain; --data_out
+    	data_size_in   		: IN   	std_logic_vector(DATA_SIZE_MAX_BIT - 1 downto 0);
+    	data_size_out  		: OUT  	std_logic_vector(DATA_SIZE_MAX_BIT - 1 downto 0);
 
 
-    -- Data processor active flag
-    process_ready       : INOUT std_logic;
-    process_complete    : INOUT std_logic;
+    	-- Data processor active flag
+    	processor_ready       	: INOUT std_logic;
+    	processor_complete    	: INOUT std_logic;
 
-    -- BCID address
-    BCID_addr_in        : IN    std_logic_vector(8 downto 0); 
-    BCID_addr_out       : OUT   std_logic_vector(8 downto 0)
-  );
-END Data_Processor;
+    	-- BCID address
+    	bcid_addr_in        	: IN    std_logic_vector(8 downto 0); 
+    	bcid_addr_out       	: OUT   std_logic_vector(8 downto 0)
+);
+end data_processor;
 
-ARCHITECTURE a OF Data_Processor IS
-    
-	-- ##### Components ##### --
+architecture a of data_processor is
+	component sorter is
+    	port(
+      		clk, rst        : IN	std_logic; 
+      		parity        	: IN	std_logic; --high when odd
+      		data_in       	: IN	dataTrain;
+      		data_out      	: OUT	dataTrain
+	);
+	end component;
 
-  COMPONENT Sorter IS
-    PORT(
-      rst           : in   std_logic; 
-      parity        : in   std_logic;
-      clk           : in   std_logic;
-      data_in       : in   dataTrain;
-      data_out      : out  dataTrain
+	component counter_8bit is
+    	port(
+    		clk, rst, en	: IN 	std_logic;
+    		count 		: OUT	std_logic_vector((DATA_SIZE_MAX_BIT - 1) downto 0)
+    	);
+  	end component;
 
-    );
-  END COMPONENT;
-
-  COMPONENT counter_8bit IS
-    PORT(
-    clk   :   IN std_logic;
-    rst   :   IN std_logic;
-    en    :   IN std_logic;
-    count :   OUT std_logic_vector(DATA_SIZE_MAX_BIT - 1 downto 0)
-    );
-  END COMPONENT;
-
-  COMPONENT Flagger IS
-    PORT(
-      rst       : in  std_logic;  
-      clk       : in  std_logic;
-      data_in   : in  datatrain;
-      data_out  : out datatrain
-    );
-  END COMPONENT;
+  	component flagger is
+    	port(
+      		clk, rst       	: IN  	std_logic;
+      		data_in   	: IN  	datatrain;
+      		data_out  	: OUT 	datatrain
+    	);
+  	end component;
 
   -- Internal Signals
-  SIGNAL internal_clk   : std_logic;
-  SIGNAL internal_reg   : datatrain;
-  SIGNAL internal_size  : std_logic_vector(DATA_SIZE_MAX_BIT-1 downto 0); 
+  	signal internal_clk   	: 	std_logic;
+  	signal internal_reg   	: 	datatrain;
+  	signal internal_size  	: 	std_logic_vector((DATA_SIZE_MAX_BIT - 1) downto 0); 
+		
+  	shared variable state 	: 	integer range 0 to 4;
+			
+  	signal bcid_addr 	: 	std_logic_vector(8 downto 0);
+	
+  	signal sorter_rst      	: 	std_logic;
+  	signal sorter_data_in  	: 	datatrain;
+  	signal sorter_data_out 	: 	datatrain;
+  	signal sorter_parity   	: 	std_logic;
+  		
+  	signal counter_rst    	: 	std_logic;
+  	signal counter_en     	: 	std_logic;
+  	signal counter_value  	: 	std_logic_vector((DATA_SIZE_MAX_BIT - 1) downto 0);
+	
+  	signal flagger_rst     	: 	std_logic;     
+  	signal flagger_data_in 	: 	datatrain;
+  	signal flagger_data_out : 	datatrain;
 
-  SHARED VARIABLE state : integer range 0 to 4;
-
-  SIGNAL BCID_addr : std_logic_vector(8 downto 0);
-
-  SIGNAL sorter_rst      : std_logic;
-  SIGNAL sorter_data_in  : datatrain;
-  SIGNAL sorter_data_out : datatrain;
-  SIGNAL sorter_parity   : std_logic;
-  
-  SIGNAL counter_rst    : std_logic;
-  SIGNAL counter_en     : std_logic;
-  SIGNAL counter_value  : std_logic_vector(DATA_SIZE_MAX_BIT-1 downto 0);
-
-  SIGNAL flagger_rst      : std_logic;     
-  SIGNAL flagger_data_in  : datatrain;
-  SIGNAL flagger_data_out : datatrain;
-
-BEGIN
-  ------------------------------------------------------------------
-  ---------------------- Port Mapping ------------------------------ 
-
-  Sorter1 : Sorter
-    PORT MAP (
-      clk       => internal_clk,
-      rst       => sorter_rst,
+	begin
+	sorter1 : sorter
+    	port map (
+    	  	clk       	=> internal_clk,
+      		rst       	=> sorter_rst,
       
-      data_in    => sorter_data_in,
-      data_out   => sorter_data_out,      
+      		data_in    	=> sorter_data_in,
+      		data_out   	=> sorter_data_out,      
       
-      parity    => sorter_parity
+      		parity    	=> sorter_parity
+    	);
 
-    );
+	counter1 : counter_8bit
+    	port map (
+      		clk   		=> internal_clk,
+      		rst   		=> counter_rst,
 
-  Counter1 : counter_8bit
-    PORT MAP (
-      clk   => internal_clk,
-      rst   => counter_rst,
+      		en    		=> counter_en,
+      		count 		=> counter_value
+    	);
 
-      en    => counter_en,
-      count => counter_value
-      );
-
-  Flagger1 : Flagger
-    PORT MAP (
-      clk         => internal_clk,
-      rst         => flagger_rst,
-      
-      data_in     => flagger_data_in,
-      data_out    => flagger_data_out
-      );
+	flagger1 : flagger
+    	port map (
+      		clk        	=> internal_clk,
+      		rst         	=> flagger_rst,
+      	
+      		data_in     	=> flagger_data_in,
+      		data_out    	=> flagger_data_out
+      	);
 
 
-  ------------------------------------------------------------------
-  ---------------------- Control Process ---------------------------
-
-  -- Constant Signal Propergation
-
-  internal_clk <= clk;
-  sorter_data_in <= internal_reg;
-
-  PROCESS(clk, rst)
-  BEGIN
-
-    IF (rst = '1') THEN
-
-      -- reset componants
-      sorter_rst    <= '1';
-      flagger_rst   <= '1';
-      counter_rst   <= '1';
-
-      -- prep for restart
-      process_complete  <= '1';
-      counter_en        <= '0';
-      state             := 0;
-
-    ELSIF rising_edge(clk) THEN     
-
-      IF state = 0  THEN 
-
-        -- collect data
-        internal_reg  <= data_in;
-        internal_size <= data_size_in;
-        BCID_addr     <= BCID_addr_in;
-
-        IF (process_ready = '0') THEN -- new data was read in
-          -- prep for state 1
-          counter_rst   <= '1';
-          counter_en    <= '0';
-          -- move to next state
-          state := 1;
-        END IF;
-
-      ELSIF state = 1 THEN -- sort data
-
-        -- count time in state      
-        counter_rst <= '0';
-        counter_en  <= '1';
-
-        -- feedback sorter
-        sorter_parity <= NOT sorter_parity;
-        internal_reg  <= sorter_data_out;
-
-        IF (counter_value = internal_size) THEN --sort is complete
-          -- move to next state
-          state := 2;
-        END IF;
-     
-      ELSIF state = 2 THEN
-        flagger_data_in <= internal_reg;
-        state := 3;
-
-      ELSIF state = 3 THEN
-        data_out  <= flagger_data_out;  
-        process_complete  <= '1';
-        BCID_addr_out     <= BCID_addr;
-        data_size_out <= internal_size; -- propogate size across
-        state := 4;
-
-      ELSIF state = 4 THEN
-        --check if data has been read-out
-        IF process_complete = '0' THEN --data has been read
-          -- prep for state 0
-          process_ready <= '1';
-          state := 0;
-        END IF;
-
-      END IF;
-
-    END IF;
-  
-  END PROCESS;
-
-END a;
+---------------------- Control Process ---------------------------
+  	-- Constant Signal Propagation
+  	internal_clk	<= clk;
+  	sorter_data_in 	<= internal_reg;
+	
+	process(clk, rst)
+  		begin
+		if (rst = '1') then
+			-- reset componants
+      			sorter_rst    			<= '1';
+      			flagger_rst   			<= '1';
+      			counter_rst   			<= '1';
+	
+      			-- prep for restart
+      			processor_complete		<= '1';
+      			counter_en        		<= '0';
+      			state             		:= 0;
+		elsif rising_edge(clk) then
+			if state = 0 then
+        			-- collect data
+        			internal_reg  		<= data_in;
+        			internal_size 		<= data_size_in;
+        			bcid_addr     		<= bcid_addr_in;
+	
+        			if (processor_ready = '0') then -- new data was read in
+        			  	-- prep for state 1
+        			  	counter_rst   	<= '1';
+        			  	counter_en    	<= '0';
+        			  	-- move to next state
+        			  	state 		:= 1;
+        			end if;
+			elsif state = 1 then -- sort data
+			        -- count time in state      
+        			counter_rst 		<= '0';
+        			counter_en  		<= '1';
+	
+        			-- feedback sorter
+        			sorter_parity 		<= NOT sorter_parity;
+        			internal_reg  		<= sorter_data_out;
+	
+        			if (counter_value = internal_size) then 
+					-- sort is complete; move to next state
+        		  		state		:= 2;
+        			end if;
+ 			elsif state = 2 then
+        			flagger_data_in 	<= internal_reg;
+        			state 			:= 3;
+	
+      			elsif state = 3 then
+        			data_out  		<= flagger_data_out;  
+        			processor_complete  	<= '1';
+        			BCID_addr_out     	<= BCID_addr;
+        			data_size_out 		<= internal_size; -- propagate size across
+        			state 			:= 4;
+	    	  	elsif state = 4 then
+        			--check if data has been read-out
+        			if processor_complete = '0' then --data has been read
+        				-- prep for state 0
+        		  		processor_ready 	<= '1';
+   	    	   			state 		:= 0;
+   		     		end if;
+			end if;
+   		end if;
+	end process;
+end a;
