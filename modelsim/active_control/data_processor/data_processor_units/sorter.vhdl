@@ -7,62 +7,51 @@
 
 
 -- IEEE VHDL standard library:
-LIBRARY ieee;
-USE ieee.std_logic_1164.all;
-USE ieee.numeric_std.all;
+library ieee;
+use ieee.std_logic_1164.all;
+use ieee.numeric_std.all;
+use work.isolation_flagging_package.all;
+use work.detector_constant_declaration.all;
 
-USE work.Isolation_Flagging_Package.all;
-USE work.Detector_Constant_Declaration.all;
+entity bubble_sorter is
+port(
+   	clk, rst	: in 	std_logic;
+   	parity 		: in 	std_logic; -- high if odd
+   	data_in 	: in 	datatrain;
+  	data_out	: out 	datatrain
+);
+end entity;
 
-ENTITY Bubble_Sorter IS
-
-  PORT(
-
-   	rst 			: in 	std_logic;	
-   	dataIn      	: in 	dataTrain;
-   	parity 			: in 	std_logic; -- high if odd
-   	clk				: in 	std_logic;
-  	dataOut   		: out 	dataTrain
-  );
-
- END ENTITY;
-
-ARCHITECTURE a OF Bubble_Sorter IS
-	SHARED VARIABLE inter_reg : dataTrain; --intermediate shift regester
-
-BEGIN
-
-	PROCESS(clk, rst)
-	BEGIN
-
-		IF rst = '1' THEN
-
-			dataOut <= reset_pattern_train;
+architecture a of bubble_sorter is
+	shared variable inter_reg : datatrain; --intermediate shift register
+begin
+	process(clk, rst)
+	begin
+		if rst = '1' then
+			data_out <= reset_pattern_train;
 			inter_reg := reset_pattern_train;
-
-		ELSIF rising_edge(clk) THEN
-			FOR i IN 0 to (MAX_FLAG_SIZE - 2) LOOP
+		elsif rising_edge(clk) then
+			for i in 0 to (MAX_FLAG_SIZE - 2) loop
 				-- check even
-				IF ((i mod 2 = 1) AND parity = '1') OR ((i mod 2 = 0) AND parity = '0') THEN
-
+				if ((i mod 2 = 1) AND (parity = '1')) OR ((i mod 2 = 0) AND (parity = '0')) then
 					-- check if switch is required -- sorting by both Chip ID and column
-					IF (to_integer(unsigned(dataIn(i)(23 downto 14))) < to_integer(unsigned(dataIn(i+1)(23 downto 14)))) THEN
+					if (to_integer(unsigned(data_in(i)(23 downto 14))) < to_integer(unsigned(data_in(i + 1)(23 downto 14)))) then
 						-- make switch
-						inter_reg(i) 	:= dataIn(i+1);
-						inter_reg(i+1) 	:= dataIn(i);
-					ELSE
+						inter_reg(i) 		:= data_in(i + 1);
+						inter_reg(i + 1) 	:= data_in(i);
+					else
 						-- dont make switch
-						inter_reg(i) 	:= dataIn(i);
-						inter_reg(i+1) 	:= dataIn(i+1); 
-					END IF;
-				END IF;
-			END LOOP;
+						inter_reg(i) 		:= data_in(i);
+						inter_reg(i + 1)	:= data_in(i + 1); 
+					end if;
+				end if;
+			end loop;
 
-			IF parity = '1' THEN
-				inter_reg(0) := dataIn(0);
-				inter_reg(MAX_FLAG_SIZE - 1 ) := dataIn(MAX_FLAG_SIZE - 1);
-			END IF;
-			dataOut <= inter_reg;
-		END IF;
-	END PROCESS;
-END a;
+			if parity = '1' then
+				inter_reg(0) := data_in(0);
+				inter_reg(MAX_FLAG_SIZE - 1) := data_in(MAX_FLAG_SIZE - 1);
+			end if;
+			data_out <= inter_reg;
+		end if;
+	end process;
+end a;
