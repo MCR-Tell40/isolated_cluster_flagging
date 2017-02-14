@@ -13,7 +13,7 @@ ENTITY Flagger IS
   PORT(
 
    	rst 			: in 	std_logic;	
-   	clk				: in 	std_logic;
+   	clk			: in 	std_logic;
    	data_in			: in 	datatrain;
    	data_out		: out 	datatrain
   );
