@@ -1,0 +1,30 @@
+# Directories
+modelsim/.ref/
+modelsim/work/
+
+# Temp files
+*~
+*#
+
+# General files
+*.txt
+*.log
+*.bak
+*transcript
+
+# Modelsim
+*.mti
+*.dbg
+*.wlf
+
+# Quartus
+*.ipinfo
+*.qsf
+*.qws
+*.rpt
+*.done
+*.jdi
+*.sld
+*.summary
+*.sof
+
