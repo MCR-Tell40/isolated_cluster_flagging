@@ -177,7 +177,7 @@ architecture a of data_processor is
         			--check if data has been read-out
         			if processor_complete = '0' then --data has been read
         				-- prep for state 0
-        		  		processor_ready 	<= '1';
+        		  		processor_ready <= '1';
    	    	   			state 		:= 0;
    		     		end if;
 			end if;
