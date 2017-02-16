@@ -17,7 +17,6 @@ modelsim/work/
 *.mti
 *.dbg
 *.wlf
-*.mpf
 
 # Quartus
 *.ipinfo
