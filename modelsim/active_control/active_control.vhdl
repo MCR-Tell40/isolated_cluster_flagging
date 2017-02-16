@@ -9,9 +9,9 @@ library ieee;
 use ieee.std_logic_1164.all;
 use ieee.numeric_std.all;
 use work.isolation_flagging_package.all;
---use ieee.std_logic_arith.all;
 use ieee.std_logic_unsigned.all;
 use work.detector_constant_declaration.all;
+--use ieee.std_logic_arith.all;
 
 entity active_control is 
 port(
@@ -32,23 +32,20 @@ port(
 	wr_en		:	OUT 	std_logic;
 	wr_data 	:	OUT	std_logic_vector ((WR_WORD_SIZE - 1) downto 0);
 
-	-- Bypass Interace
+	-- Bypass Interface
 	fifo_wr_en 	:	OUT 	std_logic;
 	fifo_data  	:	OUT 	std_logic_vector (6 downto 0);
 	bypass_en  	: 	OUT 	std_logic
 );
-
 end active_control;
 
 architecture a of active_control is
-
 	-- in process variables
 	shared variable rd_state 		: integer;
 	shared variable rd_data_store 		: datatrain;
 	shared variable rd_processor_num 	: integer range 0 to (DATA_PROCESSOR_COUNT - 1);
 	shared variable rd_bcid_store		: std_logic_vector (8 downto 0);
 	shared variable rd_size_store		: std_logic_vector (7 downto 0);
-
 
 	-- for data formatting
 	shared variable rd_construct_store 	: datatrain_rd;
@@ -70,19 +67,19 @@ architecture a of active_control is
 		clk 			: IN    std_logic; -- clk
 		    	
 		-- Data transfer	
-		data_in     		: IN 	datatrain; -- data in
-		data_out    		: OUT 	datatrain; -- data out
+		data_in     		: IN 	datatrain_rd; -- data in
+		data_out    		: OUT 	datatrain_wr; -- data out
 	
-		data_size_in   		: IN    std_logic_vector ((DATA_SIZE_MAX_BIT - 1) downto 0);
-		data_size_out 		: OUT   std_logic_vector ((DATA_SIZE_MAX_BIT - 1) downto 0);
+		data_size_in		: IN    std_logic_vector ((DATA_SIZE_MAX_BIT - 1) downto 0);
+		data_size_out		: OUT   std_logic_vector ((DATA_SIZE_MAX_BIT - 1) downto 0);
 		    
 		-- Data processor active flag
-		process_ready 		: INOUT std_logic;
-		process_complete	: INOUT std_logic;
+		processor_ready 	: INOUT std_logic;
+		processor_complete	: INOUT std_logic;
 
 		-- BCID Address
-		bcid_in        		: IN    std_logic_vector (8 downto 0); 
-		bcid_out       		: OUT   std_logic_vector (8 downto 0)
+		data_bcid_in   		: IN    std_logic_vector (8 downto 0); 
+		data_bcid_out      	: OUT   std_logic_vector (8 downto 0)
 	);
 	end component;
 
@@ -103,30 +100,32 @@ architecture a of active_control is
 	);
 	end component;
 
-	signal processor_complete 	: std_logic_vector ((DATA_PROCESSOR_COUNT - 1) downto 0);
-	signal processor_ready 		: std_logic_vector ((DATA_PROCESSOR_COUNT - 1) downto 0);
+	signal processor_complete 	: 	std_logic_vector ((DATA_PROCESSOR_COUNT - 1) downto 0);
+	signal processor_ready 		: 	std_logic_vector ((DATA_PROCESSOR_COUNT - 1) downto 0);
 	
+	--generate processors and map data_processor ports to active_control ports
 	begin
 	gen_processors: for i in 0 to (DATA_PROCESSOR_COUNT - 1) generate
+		--define processor_x and map data_processor to active_control
 		begin
 		processor_x : data_processor port map(
-			rst,
-			clk,
+			rst			=> rst,
+			clk			=> clk,
 			    
 			-- Data transfer
-			processor_in(i),
-			processor_out(i),
+			data_in(i) 		=> rd_data,
+			data_out(i) 		=> wr_data,
 			    
-			processor_size_in(i),
-			processor_size_out(i),
+			data_size_in(i)		=> ct_data,
+			data_size_out(i)	=> ct_addr,
 		    
 			-- Data processor active flag
-			processor_ready(i),
-			processor_complete(i),
+			--processor_ready 	
+			--processor_complete
 
 			-- BCID Address
-			processor_bcid_in(i),
-			processor_bcid_out(i)
+			data_bcid_in	=> rd_addr,
+			data_bcid_out	=> wr_addr
 		);
 	end generate gen_processors;
 
@@ -181,7 +180,7 @@ architecture a of active_control is
 			elsif rd_state = 1 then
 				-- 
 				fifo_wr_en 	<= '0';
-				rd_iteration 	<= rd_iteration + 1;
+				rd_iteration 	:= rd_iteration + 1;
 
 				-- prep for next state
 				if rd_iteration = to_integer(unsigned(ct_data))/RD_WORD_SIZE then
@@ -194,9 +193,9 @@ architecture a of active_control is
 					rd_processor_num 			:= rd_processor_num + 1; -- This should never be needed, but just in case.
 				else
 					-- processor free; pass data to processor
-					processor_in (rd_processor_num) 	<= rd_data_store;
-					processor_bcid_in (rd_processor_num) 	<= rd_bcid_store;
-					processor_size_in (rd_processor_num) 	<= rd_size_store;
+					data_in (rd_processor_num) 	<= rd_data_store;
+					data_bcid_in (rd_processor_num) 	<= rd_bcid_store;
+					data_size_in (rd_processor_num) 	<= rd_size_store;
 					processor_ready (rd_processor_num) 	<= '0';
 
 					-- prep for next addr
@@ -268,7 +267,7 @@ architecture a of active_control is
 
 	process
 	begin
-		if processor_ready = '0XFFFFFFFF' AND rd_state = 3 then -- active control complete
+		if processor_ready = ' 0XFFFFFFFF ' AND rd_state = 3 then -- active control complete
 			bypass_en <= '1';
 		end if;
 	end process;
