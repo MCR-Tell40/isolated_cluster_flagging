@@ -6,99 +6,87 @@
 -- Date: 18 Feb 2016																	--
 ------------------------------------------------------------------------------------------
 
-library IEEE;
-USE IEEE.STD_LOGIC_1164.ALL;
-USE IEEE.NUMERIC_STD.ALL;
+library ieee;
+use ieee.std_logic_1164.all;
+use ieee.numeric_std.all;
  
-entity interface_FIFO is
-	Generic (
-		constant DATA_WIDTH  : positive := 6;
-		constant FIFO_DEPTH	: positive := 32
-	);
-	Port ( 
-		-- INPUT
-		CLK		: in  STD_LOGIC;
-		RST		: in  STD_LOGIC;
-		WriteEn	: in  STD_LOGIC;
-		DataIn	: in  STD_LOGIC_VECTOR (DATA_WIDTH - 1 downto 0);
-		ReadEn	: in  STD_LOGIC;
-		-- OUTPUT
-		DataOut	: out STD_LOGIC_VECTOR (DATA_WIDTH - 1 downto 0);
-		Empty	: out STD_LOGIC;
-		Full	: out STD_LOGIC
-	);
-end interface_FIFO;
+entity interface_fifo is
+generic (
+	constant DATA_WIDTH  	: 	positive := 6;
+	constant FIFO_DEPTH	: 	positive := 32
+);
+port (
+	clk, rst		: IN	std_logic;
+	write_en		: IN	std_logic;
+	read_en			: IN	std_logic;
+	data_in			: IN	std_logic_vector (DATA_WIDTH - 1 downto 0);
+	data_out		: OUT	std_logic_vector (DATA_WIDTH - 1 downto 0);
+	empty			: OUT	std_logic;
+	full			: OUT	std_logic
+);
+end interface_fifo;
  
-architecture Behavioral of interface_FIFO is
- 
+architecture behavioural of interface_fifo is
 begin
- 
 	-- Memory Pointer Process
-	fifo_proc : process (CLK)
-		type FIFO_Memory is array (0 to FIFO_DEPTH - 1) of STD_LOGIC_VECTOR (DATA_WIDTH - 1 downto 0);
-		variable Memory : FIFO_Memory;
+	fifo_proc : process (clk)
+		type fifo_memory is array (0 to FIFO_DEPTH - 1) of std_logic_vector (DATA_WIDTH - 1 downto 0);
+		variable memory : fifo_memory;
 		
-		variable Head : natural range 0 to FIFO_DEPTH - 1;
-		variable Tail : natural range 0 to FIFO_DEPTH - 1;
-		
-		variable Looped : boolean;
+		variable head 	: natural range 0 to FIFO_DEPTH - 1;
+		variable tail 	: natural range 0 to FIFO_DEPTH - 1;
+		variable looped : boolean;
 	begin
-		if rising_edge(CLK) then
-			if RST = '1' then
-				Head := 0;
-				Tail := 0;
+		if rising_edge(clk) then
+			if rst = '1' then
+				head 	:= 0;
+				tail 	:= 0;
 				
-				Looped := false;
+				looped 	:= false;
 				
-				Full  <= '0';
-				Empty <= '1';
+				full  	<= '0';
+				empty 	<= '1';
 			else
-				if (ReadEn = '1') then
-					if ((Looped = true) or (Head /= Tail)) then
+				if (read_en = '1') then
+					if ((looped = true) or (head /= tail)) then
 						-- Update data output
-						DataOut <= Memory(Tail);
+						data_out 	<= memory(tail);
 						
 						-- Update Tail pointer as needed
-						if (Tail = FIFO_DEPTH - 1) then
-							Tail := 0;
-							
-							Looped := false;
+						if (tail = FIFO_DEPTH - 1) then
+							tail 	:= 0;
+							looped 	:= false;
 						else
-							Tail := Tail + 1;
+							tail 	:= tail + 1;
 						end if;
-						
 					end if;
 				end if;
-				
-				if (WriteEn = '1') then
-					if ((Looped = false) or (Head /= Tail)) then
+				if (write_en = '1') then
+					if ((looped = false) or (head /= tail)) then
 						-- Write Data to Memory
-						Memory(Head) := DataIn;
+						memory(head) 	:= data_in;
 						
 						-- Increment Head pointer as needed
-						if (Head = FIFO_DEPTH - 1) then
-							Head := 0;
-							
-							Looped := true;
+						if (head = FIFO_DEPTH - 1) then
+							head 	:= 0;
+							looped 	:= true;
 						else
-							Head := Head + 1;
+							head 	:= head + 1;
 						end if;
 					end if;
 				end if;
-				
-				-- Update Empty and Full flags
-				if (Head = Tail) then
-					if Looped then
-						Full <= '1';
+				-- Update empty and full flags
+				if (head = tail) then
+					if looped then
+						full 	<= '1';
 					else
-						Empty <= '1';
+						empty 	<= '1';
 					end if;
 				else
-					Empty	<= '0';
-					Full	<= '0';
+					empty	<= '0';
+					full	<= '0';
 				end if;
 			end if;
 		end if;
-	end process;
-		
-end Behavioral;
+	end process;	
+end behavioural;
