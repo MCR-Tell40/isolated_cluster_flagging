@@ -15,10 +15,10 @@ use work.detector_constant_declaration.all;
 
 entity bubble_sorter is
 port(
-   	clk, rst	: in 	std_logic;
-   	parity 		: in 	std_logic; -- high if odd
-   	data_in 	: in 	datatrain;
-  	data_out	: out 	datatrain
+   	clk, rst	: IN 	std_logic;
+   	parity 		: IN 	std_logic; -- high if odd
+   	data_in 	: IN 	datatrain;
+  	data_out	: OUT 	datatrain
 );
 end entity;
 
