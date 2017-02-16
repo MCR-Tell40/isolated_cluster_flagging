@@ -5,6 +5,7 @@ modelsim/work/
 # Temp files
 *~
 *#
+*.swp
 
 # General files
 *.txt
@@ -16,6 +17,7 @@ modelsim/work/
 *.mti
 *.dbg
 *.wlf
+*.mpf
 
 # Quartus
 *.ipinfo
