@@ -1,6 +1,6 @@
 -- construct_datatrain.vhd
 -- Author: Ben Jeffrey 
--- Purpose: Combines input signals to form a datatrain type object. Pads input signals with 0;s
+-- Purpose: Combines input signals to form a datatrain type object. Pads input signals with 0s
 
 library ieee;
 use ieee.numeric_std.all;
