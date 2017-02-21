@@ -1,41 +1,36 @@
--- construct_datatrain.vhd
--- Author: Ben Jeffrey 
--- Purpose: Combines input signals to form a datatrain type object. Pads input signals with 0s
+--construct_datatrain.vhd
+-- combine input signals and pad with zeroes to form a datatrain
 
 library ieee;
 use ieee.numeric_std.all;
 use ieee.std_logic_1164.all;
-use work.detector_constant_declaration.all;
-use work.isolation_flagging_package.all;
+use work.detector_constant_declaration.all;	-- constants file
+use work.eif_package.all;			-- custom type definitions
 
-entity construct_datatrain is 
-port(
-	data_in 	: IN datatrain_rd;	-- 8 x 16 24-bit-SPP
-	reset 		: IN std_logic;
-	data_out	: OUT datatrain		-- 128 x 1 32-bit-SPP
-);
+entity construct_datatrain is
+	port(	rst		: IN	std_logic;	-- reset
+		rd_data		: IN	datatrain_rd;	-- 8 x 16 24bit SPP 	input
+		wr_data		: OUT	datatrain);	-- 128 x 1 32bit SPP	output
 end construct_datatrain;
 
 architecture a of construct_datatrain is
-	-- internal register
-	signal inter_reg : datatrain;
+	signal inter_reg	: datatrain;	-- internal register for manipulation
 begin
-	process(reset)
+	process(rst)
 	begin
-		if reset = '1' then 
-			-- set internal register to zero
-			inter_reg <= reset_pattern_train;	
-		else 
-			-- load the input datatrain into an internal register
-			-- need to split up and pad with 0's to make 32 bit SPP
-			for i in 0 to 7 loop 
+		if rst = '1' then
+			-- reset internal register (fill with zeroes)
+			inter_reg	<= reset_pattern_train;
+		else
+			-- load rd_data into inter_reg, split up and pad with zeroes to make a 32bit SPP
+			for i in 0 to 7 loop
 				for j in 0 to 15 loop
-					inter_reg(16 * i + j) <= "00000000" & data_in(i)(24 * (j + 1) - 1 downto 24 * j);
+					inter_reg(16 * i + j) <= "00000000" & rd_data(i)(24 * (j + 1) - 1 downto 24 * j);
 				end loop;
 			end loop;
 		end if;
-		-- offload internal register to output
-		data_out <= inter_reg;
+		-- load inter_reg into wr_data to output
+		wr_data		<= inter_reg;
 	end process;
-end architecture; 
+end architecture;
 

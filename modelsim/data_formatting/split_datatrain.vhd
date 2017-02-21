@@ -1,40 +1,36 @@
--- split_datatrain.vhd
--- Author: Ben Jeffrey 
--- Purpose: Splits up a datatrain type into 8 32-bit SPP signals
+--split_datatrain.vhd
+-- split a datatrain into its 8 constituent 32bit SPPs
+
 
 library ieee;
 use ieee.numeric_std.all;
 use ieee.std_logic_1164.all;
-
-use work.detector_constant_declaration.all;
-use work.isolation_flagging_package.all;
+use work.detector_constant_declaration.all;	-- constants file
+use work.eif_package.all;			-- custom type definitions
 
 entity split_datatrain is
-port(
-	data_in 	: IN 	datatrain;			-- 128 x 1 32-bit-SPP
-	reset 		: IN 	std_logic;
-	data_out	: OUT	datatrain_wr		-- 8 x 16 32-bit-SPP 
-);
+	port(	rst		: IN	std_logic;	-- reset
+		rd_data		: IN	datatrain;	-- 128 x 1 32bit SPPs
+		wr_data		: OUT	datatrain_wr);	-- 8 x 16 32bit SPPs
 end split_datatrain;
 
 architecture a of split_datatrain is
-	-- internal register
-	signal inter_reg : datatrain_wr;
+	signal inter_reg	: datatrain_wr;	-- internal register for manipulation
 begin
-	process(reset)
+	process(rst)
 	begin
-		if reset = '1' then
-			inter_reg 	<= reset_pattern_wrtrain;
-		else 
-			-- load the input datatrain into an internal register
-			-- need to split up into individual SPPs
-			for i in 0 to 7 loop 
+		if rst = '1' then
+			-- reset internal register (fill with zeroes)
+			inter_reg	<= reset_pattern_wrtrain;
+		else
+			-- load rd_data into inter_reg, split up into individual SPPs
+			for i in 0 to 7 loop
 				for j in 0 to 15 loop
-					inter_reg(i)(((j + 1) * 32) - 1 downto 32 * j) <= data_in(16 * i + j);
+					inter_reg(i)((32 * (j + 1)) - 1 downto 32 * j)	<= rd_data(16 * i + j);
 				end loop;
 			end loop;
 		end if;
-		-- offload internal register to output
-		data_out	<= inter_reg;
+		-- load inter_reg into wr_data to output
+		wr_data		<= inter_reg;
 	end process;
-end architecture; 
+end architecture;

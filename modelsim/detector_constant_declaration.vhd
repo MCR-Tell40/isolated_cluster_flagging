@@ -1,3 +1,7 @@
+--detector_constant_declaration.vhd
+-- Define detector constants
+
+
 library ieee;
 use ieee.std_logic_1164.all;
 use ieee.numeric_std.all;
@@ -6,21 +10,20 @@ package detector_constant_declaration is
 
   -------------- Incoming FE data ----------------------------------------------------------------------------------------
   constant data_format_type    		: std_logic_vector(2 downto 0) := "001";
-  -- Select the data format expected :		
-  -- 001 for variable header length with dynamic data structure
-  -- 010 for fixed header length with dynamic data structure
-  -- 100 for fixed header length with fixed data structure
-  -- 101 for UT data structure (BXID + NoData + IsTrunc + NZS + Parity + Length + Data)
+  -- Select the data format expected:		
+  -- 	001 for variable header length with dynamic data structure
+  -- 	010 for fixed header length with dynamic data structure
+  -- 	100 for fixed header length with fixed data structure
+  -- 	101 for UT data structure (BXID + NoData + IsTrunc + NZS + Parity + Length + Data)
   
-  constant simulation_fe_data_origin    : std_logic_vector (1 downto 0):= "01"; 
-  -- Select the type of injection of data :
-  -- 00 nothing
-  -- 01 data from the generic data generator
-  -- 10 data from the txt file
-  -- 11 data from the sub-detector data generator
+  constant simulation_fe_data_origin    : std_logic_vector(1 downto 0) := "01"; 
+  -- Select the type of injection of data:
+  -- 	00 nothing
+  -- 	01 data from the generic data generator
+  -- 	10 data from the txt file
+  -- 	11 data from the sub-detector data generator
 
   -- FE specific configuration parameters
-  -- 
   constant channel_size                 : integer := 4; 
   constant number_of_channel            : integer := 500;
   constant FE_word_size                 : integer := (channel_size * number_of_channel);
@@ -41,7 +44,7 @@ package detector_constant_declaration is
   constant occupancy_05                 : real := 1.0;
   constant occupancy_06                 : real := 0.5;
   
-  constant NZS_data_length	      	: integer := channel_size*number_of_channel;
+  constant NZS_data_length	      	: integer := channel_size * number_of_channel;
 
   constant FE_BXID_offset               : unsigned(11 downto 0) 	:= X"000";
   constant SOL40_TO_FE_TFC_CMD_offset   : unsigned(11 downto 0) 	:= X"D48";
@@ -118,20 +121,18 @@ package detector_constant_declaration is
   constant RD_WORD_SIZE         	: integer := 384;
   constant RD_SPP_SIZE          	: integer := 24;
   constant RD_SPP_PER_BCID      	: integer := 512;
-  constant RD_RAM_ADDR_SIZE     	: integer := 128; -- Don't know what value this actually takes
+  constant RD_RAM_ADDR_SIZE     	: integer := 128; -- Nick and Ben's guess
 	
   constant WR_WORD_SIZE         	: integer := 512;
   constant WR_SPP_SIZE          	: integer := 32;
   constant WR_SPP_PER_BCID      	: integer := 512;
-  constant WR_RAM_ADDR_SIZE     	: integer := 128; -- Don't know what value goes here
+  constant WR_RAM_ADDR_SIZE     	: integer := 128; -- Nick and Ben's guess
 	
   constant COUNT_RAM_WORD_SIZE  	: integer := 9;
 	
   constant DATA_SIZE_MAX_BIT    	: integer := 8;
   constant BUFFER_LIFETIME      	: integer := 2048;
   	
-  constant MAX_ADDR 			: integer := 128; -- UNSURE OF 
-
+  constant MAX_ADDR 			: integer := 128; -- Nick and Ben's guess
 
 end detector_constant_declaration;
-
