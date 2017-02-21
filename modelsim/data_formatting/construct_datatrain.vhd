@@ -14,7 +14,7 @@ entity construct_datatrain is
 end construct_datatrain;
 
 architecture a of construct_datatrain is
-	signal inter_reg	: datatrain;	-- internal register for manipulation
+	signal inter_reg	: datatrain;	-- internal shift register
 begin
 	process(rst)
 	begin
