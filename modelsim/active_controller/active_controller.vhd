@@ -53,12 +53,6 @@ architecture a of active_controller is
 	shared variable wr_bcid_store		: 	std_logic_vector(8 downto 0);
 	shared variable wr_size_store		: 	std_logic_vector(7 downto 0);
 
-	-- some data processor signals require custom types (some vectors of vectors)
-	type dp_addr_vector	is array (DATA_PROCESSOR_COUNT - 1 downto 0)	of std_logic_vector(8 downto 0);
-	type dp_rd_data_vector	is array (DATA_PROCESSOR_COUNT - 1 downto 0)	of datatrain_rd;
-	type dp_wr_data_vector	is array (DATA_PROCESSOR_COUNT - 1 downto 0)	of datatrain_wr;
-	type dp_size_vector	is array (DATA_PROCESSOR_COUNT - 1 downto 0)	of std_logic_vector(DATA_SIZE_MAX_BIT - 1 downto 0);
-	
 	-- use the previously defined types to create signals for each of the generated data processors
 	signal processor_ready			: 	std_logic_vector(DATA_PROCESSOR_COUNT - 1 downto 0);
 	signal processor_complete		: 	std_logic_vector(DATA_PROCESSOR_COUNT - 1 downto 0);

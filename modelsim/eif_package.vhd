@@ -33,4 +33,10 @@ package eif_package is
 	-- construct vector of datatrain_wr reset elements as a reset pattern for the datatrain
 	constant reset_pattern_wrtrain	: datatrain_wr	:= (others => reset_pattern_wr);
 
+-- Custom types for array of data processors
+	type dp_addr_vector	is array (DATA_PROCESSOR_COUNT - 1 downto 0)	of std_logic_vector(8 downto 0);
+	type dp_rd_data_vector	is array (DATA_PROCESSOR_COUNT - 1 downto 0)	of datatrain_rd;
+	type dp_wr_data_vector	is array (DATA_PROCESSOR_COUNT - 1 downto 0)	of datatrain_wr;
+	type dp_size_vector	is array (DATA_PROCESSOR_COUNT - 1 downto 0)	of std_logic_vector(DATA_SIZE_MAX_BIT - 1 downto 0);
+
 end eif_package;
