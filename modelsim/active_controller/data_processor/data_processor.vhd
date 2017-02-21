@@ -28,12 +28,12 @@ entity data_processor is
 
 		rd_en			: IN	std_logic;
 		rd_addr			: IN	std_logic_vector(8 downto 0);
-		rd_data			: IN	datatrain;
+		rd_data			: IN	datatrain_rd;
 		rd_size			: IN	std_logic_vector(DATA_SIZE_MAX_BIT - 1 downto 0);
 
 		wr_en			: IN	std_logic;
 		wr_addr			: OUT	std_logic_vector(8 downto 0);
-		wr_data			: OUT	datatrain;
+		wr_data			: OUT	datatrain_wr;
 		wr_size			: OUT	std_logic_vector(DATA_SIZE_MAX_BIT - 1 downto 0));
 end data_processor;
 
@@ -117,28 +117,31 @@ architecture a of data_processor is
 	sorter1 : sorter
     	port map( clk       	=> clk,
       		rst       	=> st_rst,
-     
+           	parity    	=> st_parity,
+
       		rd_data    	=> st_rd_data,
-      		wr_data   	=> st_wr_data,      
-      
-      		parity    	=> st_parity);
+      		wr_data   	=> st_wr_data);      
+
 
 	counter1 : counter
     	port map( clk   	=> clk,
       		rst   		=> ct_rst,
       		en    		=> ct_en,
+
       		count 		=> ct_count);
 
 	flagger1 : flagger
     	port map( clk        	=> clk,
       		rst         	=> fl_rst,
-      	
+
       		rd_data     	=> fl_rd_data,
       		wr_data    	=> fl_wr_data);
 
 
 -- control process
+	-- construct datatrain
   	st_rd_data 	<= inter_reg;
+	
 	
 	process(clk, rst)
   		begin
@@ -155,7 +158,8 @@ architecture a of data_processor is
 		elsif rising_edge(clk) then
 			if state = 0 then
         			-- collect data
-        			inter_reg  		<= rd_data;
+				cd_rd_data		<= rd_data;	-- construct datatrain from input data
+        			inter_reg  		<= cd_wr_data;	-- read datatrain into intermediate shift register
         			inter_size 		<= rd_size;
         			bcid_addr     		<= rd_addr;
 	
@@ -163,7 +167,7 @@ architecture a of data_processor is
         			  	-- prep for state 1
         			  	ct_rst   	<= '1';
         			  	ct_en    	<= '0';
-        			  	-- move to next state
+        			  	-- change to state 1
         			  	state 		:= 1;
         			end if;
 			elsif state = 1 then -- sort data
@@ -184,7 +188,8 @@ architecture a of data_processor is
         			state 			:= 3;
 	
       			elsif state = 3 then
-        			wr_data  		<= fl_wr_data;  
+				sd_rd_data		<= fl_wr_data;
+        			wr_data  		<= sd_wr_data;  
         			processor_complete  	<= '1';
         			wr_addr		     	<= bcid_addr;
         			wr_size			<= inter_size; -- propagate size across

@@ -33,9 +33,11 @@ entity active_controller is
 end active_controller;
 
 architecture a of active_controller is
+
+	--TODO should most of these variables not be signals?
 	-- in process variables
 	shared variable rd_state 		: 	integer;
-	shared variable rd_data_store 		: 	datatrain;
+	shared variable rd_data_store 		: 	datatrain_rd;
 	shared variable rd_processor_num 	: 	integer range 0 to (DATA_PROCESSOR_COUNT - 1);
 	shared variable rd_bcid_store		: 	std_logic_vector(8 downto 0);
 	shared variable rd_size_store		: 	std_logic_vector(7 downto 0);
@@ -49,11 +51,11 @@ architecture a of active_controller is
 	-- out process variables
 	shared variable wr_state 		: 	integer;
 	shared variable wr_processor_num 	: 	integer range 0 to (DATA_PROCESSOR_COUNT - 1);
-	shared variable wr_data_store 		: 	datatrain;
+	shared variable wr_data_store 		: 	datatrain_wr;
 	shared variable wr_bcid_store		: 	std_logic_vector(8 downto 0);
 	shared variable wr_size_store		: 	std_logic_vector(7 downto 0);
 
-	-- use the previously defined types to create signals for each of the generated data processors
+	-- use the data processor types defined in eif_package to create signal arrays for the data processor array
 	signal processor_ready			: 	std_logic_vector(DATA_PROCESSOR_COUNT - 1 downto 0);
 	signal processor_complete		: 	std_logic_vector(DATA_PROCESSOR_COUNT - 1 downto 0);
 	signal dp_rd_en				:	std_logic_vector(DATA_PROCESSOR_COUNT - 1 downto 0);
@@ -76,10 +78,10 @@ architecture a of active_controller is
 			rd_data			: IN	datatrain_rd;
 			rd_size			: IN	std_logic_vector(DATA_SIZE_MAX_BIT - 1 downto 0);
 
-			wr_en			: IN	std_logic;
-			wr_addr			: IN	std_logic_vector(8 downto 0);
-			wr_data			: IN	datatrain_wr;
-			wr_size			: IN	std_logic_vector(DATA_SIZE_MAX_BIT - 1 downto 0));
+			wr_en			: OUT	std_logic;
+			wr_addr			: OUT	std_logic_vector(8 downto 0);
+			wr_data			: OUT	datatrain_wr;
+			wr_size			: OUT	std_logic_vector(DATA_SIZE_MAX_BIT - 1 downto 0));
 	end component;
 
 	--generate the required number of processors and map them to the corresponding signals
@@ -112,7 +114,7 @@ architecture a of active_controller is
 			fifo_en 		<= '0';
 			rd_en 			<= '0';
 			wr_en 			<= '0';
-			ct_addr 		<= "0X000";
+			ct_addr 		<= X"000";
 
 			rd_state 		:= 0;
 			rd_processor_num 	:= 0;
@@ -123,7 +125,7 @@ architecture a of active_controller is
 
 		elsif rising_edge(clk) then
 			if rd_state = 0 then
-				if (ct_data <= MAX_FLAG_SIZE) AND (ct_data /= "0X000") then
+				if (ct_data <= MAX_FLAG_SIZE) AND (ct_data /= X"000") then
 					-- mark as processed
 					fifo_data 	<= (others => '0');
 					fifo_en 	<= '1';
@@ -141,14 +143,14 @@ architecture a of active_controller is
 					fifo_en 	<= '1';
 
 					-- prep for next addr
-					if rd_addr = "0X1FF" then
-						rd_addr 	<= "0X000";
+					if rd_addr = X"1FF" then
+						rd_addr 	<= X"000";
 					else
 						rd_addr 	<= rd_addr + 1;
 					end if;
 					
-					if ct_addr = "0X1FF" then
-						ct_addr 	<= "0X000";
+					if ct_addr = X"1FF" then
+						ct_addr 	<= X"000";
 					else
 						ct_addr 	<= ct_addr + 1;
 					end if;
@@ -166,17 +168,17 @@ architecture a of active_controller is
 			elsif rd_state = 2 then
 				if processor_ready(rd_processor_num) = '0' then -- Check if processor is free
 					-- processor not free, increment
-					rd_processor_num := rd_processor_num + 1; -- This should never be needed, but just in case.
+					rd_processor_num := rd_processor_num + 1; -- This should never be needed
 				else
 					-- processor free; pass data to processor
-					rd_data(rd_processor_num) 		<= rd_data_store;
-					data_bcid_in(rd_processor_num) 		<= rd_bcid_store;
-					rd_size(rd_processor_num) 		<= rd_size_store;
+					dp_rd_data(rd_processor_num) 		<= rd_data_store;
+					dp_rd_addr(rd_processor_num) 		<= rd_bcid_store;
+					dp_rd_size(rd_processor_num) 		<= rd_size_store;
 					processor_ready(rd_processor_num) 	<= '0';
 
 					-- prep for next addr
-					if rd_addr = "0X1FF" then
-						rd_addr 	<= "0X000";
+					if rd_addr = X"1FF" then
+						rd_addr 	<= X"000";
 					else
 						rd_addr 	<= rd_addr + 1;
 					end if;
@@ -189,6 +191,62 @@ architecture a of active_controller is
 					end if;
 				end if;
 			end if;
+		end if;
+	end process;
+	
+	-- continuous input assignment	
+	rd_addr <= rd_bcid_store (4 downto 0) & std_logic_vector (to_unsigned(rd_iteration, RD_RAM_ADDR_SIZE - 5));
+	process
+	begin
+		for i in 0 to 24 * to_integer(unsigned(ct_data)) / (RD_WORD_SIZE - 1) loop
+			rd_data_store(to_integer(unsigned(ct_data)) * rd_iteration + i) := "00000000" & rd_data(24 * (i + 1) - 1  downto 24 * i);
+		end loop;
+	end process;
+
+	process(rst,clk) -- data out process
+	begin
+		if rst = '1' then
+			wr_en 			<= '0';
+			wr_processor_num 	:= 0;
+		elsif rising_edge(clk) then
+			if wr_state = 0 then -- look for finished processor
+				if processor_complete(wr_processor_num) = '1' then
+					-- collect from processor
+					wr_data_store 				:= dp_wr_data(wr_processor_num);
+					wr_size_store 				:= dp_wr_size(wr_processor_num);
+					wr_bcid_store 				:= dp_wr_addr(wr_processor_num);
+
+					-- signal collection
+					processor_complete(wr_processor_num) 	<= '0';
+
+					-- next state prep
+					wr_state 				:= 1;
+					wr_en 					<= '1';
+					wr_iteration 				:= 0;
+				else
+					-- check next processor
+					wr_processor_num 			:= wr_processor_num + 1;
+				end if;
+			elsif wr_state = 1 then -- read out 
+				-- check if last iteration
+				if wr_iteration * 16 >= to_integer(unsigned(wr_size_store)) then
+					wr_state 	:= 0;
+					wr_en 		<= '0';
+				else
+					wr_iteration 	:= wr_iteration + 1;
+				end if;
+			end if;
+		end if;
+	end process;
+	
+	-- continuous output assignment	
+	wr_addr <= wr_bcid_store(4 downto 0) & std_logic_vector(to_unsigned(wr_iteration, WR_RAM_ADDR_SIZE - 5));
+	wr_data <= wr_data_store(wr_iteration);
+
+	process
+	begin
+		if processor_ready = X"FFFFFFFF" AND rd_state = 3 then -- active control complete
+			bypass_en <= '1';
 		end if;
 	end process;
 end a;

@@ -1,3 +1,5 @@
+
+
 library ieee;
 use ieee.std_logic_1164.all;
 use ieee.numeric_std.all;
@@ -11,18 +13,18 @@ entity interface_fifo is
 
 		-- from active controller
 		wr_en			: IN	std_logic;
-		wr_data			: IN	std_logic_vector (DATA_WIDTH - 1 downto 0);
+		wr_data			: IN	std_logic_vector(DATA_WIDTH - 1 downto 0);
 
 		-- to bypass controller
 		rd_en			: IN	std_logic;
-		rd_data			: OUT	std_logic_vector (DATA_WIDTH - 1 downto 0));
+		rd_data			: OUT	std_logic_vector(DATA_WIDTH - 1 downto 0));
 end interface_fifo;
  
 architecture behavioural of interface_fifo is
 begin
 	-- Memory Pointer Process
 	fifo_proc : process (clk)
-		type fifo_memory is array (0 to FIFO_DEPTH - 1) of std_logic_vector (DATA_WIDTH - 1 downto 0);
+		type fifo_memory is array (0 to FIFO_DEPTH - 1) of std_logic_vector(DATA_WIDTH - 1 downto 0);
 		variable memory : fifo_memory;
 		
 		variable head 	: natural range 0 to FIFO_DEPTH - 1;
