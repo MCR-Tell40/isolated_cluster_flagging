@@ -8,11 +8,9 @@ use work.detector_constant_declaration.all;	-- constants file
 use work.eif_package.all;			-- custom type definitions
 
 entity construct_datatrain is
-port(
-	rst		: IN	std_logic;	-- reset
-	rd_data		: IN	datatrain_rd;	-- 8 x 16 24bit SPP 	input
-	wr_data		: OUT	datatrain	-- 128 x 1 32bit SPP	output
-);
+	port(	rst		: IN	std_logic;	-- reset
+		rd_data		: IN	datatrain_rd;	-- 8 x 16 24bit SPP 	input
+		wr_data		: OUT	datatrain);	-- 128 x 1 32bit SPP	output
 end construct_datatrain;
 
 architecture a of construct_datatrain is

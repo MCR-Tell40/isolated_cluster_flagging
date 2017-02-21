@@ -9,11 +9,9 @@ use work.detector_constant_declaration.all;	-- constants file
 use work.eif_package.all;			-- custom type definitions
 
 entity split_datatrain is
-port(
-	rst		: IN	std_logic;	-- reset
-	rd_data		: IN	datatrain;	-- 128 x 1 32bit SPPs
-	wr_data		: OUT	datatrain_wr	-- 8 x 16 32bit SPPs
-);
+	port(	rst		: IN	std_logic;	-- reset
+		rd_data		: IN	datatrain;	-- 128 x 1 32bit SPPs
+		wr_data		: OUT	datatrain_wr);	-- 8 x 16 32bit SPPs
 end split_datatrain;
 
 architecture a of split_datatrain is

@@ -12,8 +12,7 @@ use work.detector_constant_declaration.all;	-- constants file
 use work.eif_package.all;			-- custom type definitions
 
 entity eif_top is
-	port(
-		clk, rst	: IN	std_logic;
+	port(	clk, rst	: IN	std_logic;
 
 		-- train size ram interface
 		ct_addr		: OUT	std_logic_vector(8 downto 0);				-- number of addresses
@@ -27,8 +26,7 @@ entity eif_top is
 		-- to output
 		wr_en		: OUT	std_logic;						-- write enable
 		wr_addr		: OUT	std_logic_vector(WR_RAM_ADDR_SIZE - 1 downto 0);	-- addresses of SPPs to be output
-		wr_data		: OUT	std_logic_vector(WR_WORD_SIZE - 1 downto 0)		-- SPP data input
-	);
+		wr_data		: OUT	std_logic_vector(WR_WORD_SIZE - 1 downto 0));		-- SPP data input
 end eif_top;
 
 architecture a of eif_top is
@@ -101,12 +99,10 @@ architecture a of eif_top is
 	end component;
 
 	component interface_fifo is
-		generic(
-			constant DATA_WIDTH	: 	positive := 6;
-			constant FIFO_DEPTH	: 	positive := 32
-		);
-		port(
-			clk, rst		: IN	std_logic;
+		generic( constant DATA_WIDTH	: 	positive := 6;
+			constant FIFO_DEPTH	: 	positive := 32);
+
+		port(	clk, rst		: IN	std_logic;
 			empty, full		: OUT 	std_logic;
 
 			-- from active controller
@@ -115,18 +111,15 @@ architecture a of eif_top is
 
 			-- to bypass controller
 			rd_en			: IN  	std_logic;
-			rd_data			: OUT 	std_logic_vector (DATA_WIDTH - 1 downto 0)
-		);
+			rd_data			: OUT 	std_logic_vector (DATA_WIDTH - 1 downto 0));
 	end component;
 
 	component bypass_controller is
-		generic(
-			ADDR_PER_RAM 		: 	integer := 32;
+		generic( ADDR_PER_RAM 		: 	integer := 32;
 			MAX_RAM_ADDR_STORE 	: 	integer := 512;
-			SPP_PER_ADDR 		: 	integer := 16
-		);
-		port(
-			clk, rst, en 		: IN 	std_logic;
+			SPP_PER_ADDR 		: 	integer := 16);
+		
+		port(	clk, rst, en 		: IN 	std_logic;
 	
 			-- from router
 			rd_en			: OUT 	std_logic;
@@ -141,16 +134,14 @@ architecture a of eif_top is
 			-- from fifo
 			fifo_rd_en 		: OUT 	std_logic;
 			fifo_data		: IN  	std_logic_vector(6 downto 0);
-			fifo_empty  		: IN 	std_logic 
-		);
+			fifo_empty  		: IN 	std_logic);
 	end component;
 
 	begin
 
 	-- generate components
 	active_controller1 : active_controller
-	port map(
-		clk		=> inter_clk,
+	port map( clk		=> inter_clk,
 		rst		=> inter_rst,
 		en		=> ac_en_pipe,
 
@@ -173,12 +164,10 @@ architecture a of eif_top is
 		fifo_data	=> fifo_wr_data_pipe,
 
 		-- to bypass controller
-		bypass_en	=> bypass_en_pipe
-	);
+		bypass_en	=> bypass_en_pipe);
 
 	interface_fifo1 : interface_fifo
-	port map(
-		clk		=> inter_clk,
+	port map( clk		=> inter_clk,
 		rst		=> inter_rst,
 		empty		=> fifo_empty_pipe,
 
@@ -188,12 +177,10 @@ architecture a of eif_top is
 
 		-- to bypass controller
 		rd_en		=> fifo_rd_en_pipe,
-		rd_data		=> fifo_rd_data_pipe
-    	);
+		rd_data		=> fifo_rd_data_pipe);
 	
 	bypass_controller1 : bypass_controller
-    	port map(
-	    	clk 		=> inter_clk,
+    	port map( clk 		=> inter_clk,
 	    	rst     	=> inter_rst,
 	    	en 		=> bypass_en_pipe,
 
@@ -210,8 +197,7 @@ architecture a of eif_top is
 		-- from fifo
 		fifo_rd_en 	=> fifo_rd_en_pipe,
 		fifo_data	=> fifo_rd_data_pipe,
-		fifo_empty  	=> fifo_empty_pipe
-    	);
+		fifo_empty  	=> fifo_empty_pipe);
 
 -- processes
 	process(clk)
