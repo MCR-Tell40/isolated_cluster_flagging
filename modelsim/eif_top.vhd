@@ -33,10 +33,6 @@ architecture a of eif_top is
 	shared variable clk_count	: natural;	-- to keep track of number of clock cycles
 
 -- internal signal pipes
-	
-	-- internal clock and reset
-	signal inter_clk, inter_rst	: std_logic;
-
 	-- active controller pipes
 	signal ac_en_pipe		: std_logic;
 	-- from router
@@ -72,8 +68,7 @@ architecture a of eif_top is
 
 -- define components
 	component active_controller is
-		port(
-			clk, rst, en		: IN	std_logic;
+		port(	clk, rst, en		: IN	std_logic;
 
 			-- from ram
 			ct_addr			: OUT	std_logic_vector(8 downto 0);
@@ -91,11 +86,10 @@ architecture a of eif_top is
 
 			-- to fifo
 			fifo_en 		: OUT 	std_logic;
-			fifo_data		: OUT 	std_logic_vector (6 downto 0);
+			fifo_data		: OUT 	std_logic_vector(6 downto 0);
 
 			-- to bypass controller
-			bypass_en 		: OUT 	std_logic
-		);
+			bypass_en 		: OUT 	std_logic);
 	end component;
 
 	component interface_fifo is
@@ -107,11 +101,11 @@ architecture a of eif_top is
 
 			-- from active controller
 			wr_en			: IN  	std_logic;
-			wr_data			: IN  	std_logic_vector (DATA_WIDTH - 1 downto 0);
+			wr_data			: IN  	std_logic_vector(DATA_WIDTH - 1 downto 0);
 
 			-- to bypass controller
 			rd_en			: IN  	std_logic;
-			rd_data			: OUT 	std_logic_vector (DATA_WIDTH - 1 downto 0));
+			rd_data			: OUT 	std_logic_vector(DATA_WIDTH - 1 downto 0));
 	end component;
 
 	component bypass_controller is
@@ -141,8 +135,8 @@ architecture a of eif_top is
 
 	-- generate components
 	active_controller1 : active_controller
-	port map( clk		=> inter_clk,
-		rst		=> inter_rst,
+	port map( clk		=> clk,
+		rst		=> rst,
 		en		=> ac_en_pipe,
 
 		-- from ram
@@ -167,8 +161,8 @@ architecture a of eif_top is
 		bypass_en	=> bypass_en_pipe);
 
 	interface_fifo1 : interface_fifo
-	port map( clk		=> inter_clk,
-		rst		=> inter_rst,
+	port map( clk		=> clk,
+		rst		=> rst,
 		empty		=> fifo_empty_pipe,
 
 		-- from active controller
@@ -180,8 +174,8 @@ architecture a of eif_top is
 		rd_data		=> fifo_rd_data_pipe);
 	
 	bypass_controller1 : bypass_controller
-    	port map( clk 		=> inter_clk,
-	    	rst     	=> inter_rst,
+    	port map( clk 		=> clk,
+	    	rst     	=> rst,
 	    	en 		=> bypass_en_pipe,
 
 		-- from router

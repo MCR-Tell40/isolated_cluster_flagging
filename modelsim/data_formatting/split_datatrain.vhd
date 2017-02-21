@@ -1,5 +1,5 @@
 --split_datatrain.vhd
--- Splits a datatrain into its 8 constituent 32bit SPPs
+-- split a datatrain into its 8 constituent 32bit SPPs
 
 
 library ieee;
