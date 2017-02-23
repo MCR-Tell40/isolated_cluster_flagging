@@ -26,7 +26,7 @@ entity eif_top is
 		-- to output
 		wr_en		: OUT	std_logic;						-- write enable
 		wr_addr		: OUT	std_logic_vector(WR_RAM_ADDR_SIZE - 1 downto 0);	-- addresses of SPPs to be output
-		wr_data		: OUT	std_logic_vector(WR_WORD_SIZE - 1 downto 0));		-- SPP data input
+		wr_data		: INOUT	std_logic_vector(WR_WORD_SIZE - 1 downto 0));		-- SPP data output
 end eif_top;
 
 architecture a of eif_top is
@@ -35,6 +35,8 @@ architecture a of eif_top is
 -- internal signal pipes
 	-- active controller pipes
 	signal ac_en_pipe		: std_logic;
+	signal ct_addr_pipe		: std_logic_vector(8 downto 0);
+	signal ct_data_pipe		: std_logic_vector(COUNT_RAM_WORD_SIZE - 1 downto 0);
 	-- from router
 	signal ac_rd_en_pipe		: std_logic;
 	signal ac_rd_addr_pipe		: std_logic_vector(RD_RAM_ADDR_SIZE - 1 downto 0);
@@ -93,7 +95,7 @@ architecture a of eif_top is
 	end component;
 
 	component interface_fifo is
-		generic( constant DATA_WIDTH	: 	positive := 6;
+		generic( constant DATA_WIDTH	: 	positive := 7;
 			constant FIFO_DEPTH	: 	positive := 32);
 
 		port(	clk, rst		: IN	std_logic;
@@ -140,8 +142,8 @@ architecture a of eif_top is
 		en		=> ac_en_pipe,
 
 		-- from ram
-		ct_addr		=> ct_addr,
-		ct_data		=> ct_data,
+		ct_addr		=> ct_addr_pipe,
+		ct_data		=> ct_data_pipe,
 
 		-- from router
 		rd_en		=> ac_rd_en_pipe,
@@ -194,6 +196,9 @@ architecture a of eif_top is
 		fifo_empty  	=> fifo_empty_pipe);
 
 -- processes
+	ct_addr <= ct_addr_pipe;
+	ct_data_pipe <= ct_data;
+
 	process(clk)
 	begin
 		if bypass_en_pipe = '1' then
