@@ -1,5 +1,3 @@
-restart -f -nolist -nowave -nolog -nobreak -novirtuals -noassertions -nofcovers -noatv
-
 vsim -novopt work.counter
 config wave -signalnamewidth 1
 
