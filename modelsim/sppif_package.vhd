@@ -7,7 +7,7 @@ use ieee.std_logic_1164.all;
 use ieee.numeric_std.all;
 use work.detector_constant_declaration.all;	-- constants file
 
-package eif_package is
+package sppif_package is
 
 ---Type definitions---
 	-- datatrain is an array of MAX_FLAG_SIZE (128) vectors, each with 32 elements
@@ -39,4 +39,4 @@ package eif_package is
 	type dp_wr_data_vector	is array (DATA_PROCESSOR_COUNT - 1 downto 0)	of datatrain_wr;
 	type dp_size_vector	is array (DATA_PROCESSOR_COUNT - 1 downto 0)	of std_logic_vector(DATA_SIZE_MAX_BIT - 1 downto 0);
 
-end eif_package;
+end sppif_package;

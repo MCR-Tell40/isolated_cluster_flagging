@@ -9,9 +9,9 @@ use ieee.std_logic_1164.all;
 use ieee.std_logic_arith.all;
 use ieee.std_logic_unsigned.all;
 use work.detector_constant_declaration.all;	-- constants file
-use work.eif_package.all;			-- custom type definitions
+use work.sppif_package.all;			-- custom type definitions
 
-entity eif_top is
+entity sppif_top is
 	port(	clk, rst	: IN	std_logic;
 
 		-- train size ram interface
@@ -27,9 +27,9 @@ entity eif_top is
 		wr_en		: OUT	std_logic;						-- write enable
 		wr_addr		: OUT	std_logic_vector(WR_RAM_ADDR_SIZE - 1 downto 0);	-- addresses of SPPs to be output
 		wr_data		: INOUT	std_logic_vector(WR_WORD_SIZE - 1 downto 0));		-- SPP data output
-end eif_top;
+end sppif_top;
 
-architecture a of eif_top is
+architecture a of sppif_top is
 	shared variable clk_count	: natural;	-- to keep track of number of clock cycles
 
 -- internal signal pipes

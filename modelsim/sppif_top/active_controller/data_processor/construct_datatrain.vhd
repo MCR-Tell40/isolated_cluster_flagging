@@ -5,7 +5,7 @@ library ieee;
 use ieee.numeric_std.all;
 use ieee.std_logic_1164.all;
 use work.detector_constant_declaration.all;	-- constants file
-use work.eif_package.all;			-- custom type definitions
+use work.sppif_package.all;			-- custom type definitions
 
 entity construct_datatrain is
 	port(	rst		: IN	std_logic;	-- reset

@@ -5,7 +5,7 @@ use ieee.numeric_std.all;
 use ieee.std_logic_1164.all;
 use ieee.std_logic_unsigned.all;
 use work.detector_constant_declaration.all;	-- constants file
-use work.eif_package.all;			-- custom type definitions		
+use work.sppif_package.all;			-- custom type definitions		
 
 entity active_controller is
 	port(	clk, rst, en		: IN	std_logic;
