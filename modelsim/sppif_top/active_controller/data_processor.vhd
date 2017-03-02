@@ -31,12 +31,12 @@ entity data_processor is
 		rd_en			: IN	std_logic;
 		rd_addr			: IN	std_logic_vector(8 downto 0);
 		rd_data			: IN	datatrain_rd;
-		rd_size			: IN	std_logic_vector(DATA_SIZE_MAX_BIT - 1 downto 0);
+		rd_size			: IN	std_logic_vector(DATA_SIZE_MAX_BIT - 1 downto 0); -- number of SPPs in datatrain
 
 		wr_en			: IN	std_logic;
 		wr_addr			: OUT	std_logic_vector(8 downto 0);
 		wr_data			: OUT	datatrain_wr;
-		wr_size			: OUT	std_logic_vector(DATA_SIZE_MAX_BIT - 1 downto 0));
+		wr_size			: OUT	std_logic_vector(DATA_SIZE_MAX_BIT - 1 downto 0)); -- number of SPPs in datatrain
 end data_processor;
 
 architecture a of data_processor is
@@ -49,7 +49,7 @@ architecture a of data_processor is
 	end component;
 
 	component split_datatrain is
-	-- splits the datatrain into its constituent SPPs
+	-- splits the datatrain into 16 blocks, each with 8 SPPs
 	port(	rst 			: IN 	std_logic;
 		rd_data 		: IN 	datatrain;	-- 128 x 1 32-bit-SPP
 		wr_data			: OUT	datatrain_wr);	-- 8 x 16 32-bit-SPP
@@ -58,28 +58,28 @@ architecture a of data_processor is
 	component sorter is
 	-- implementation of the bubble sorting algorithm
     	port(	clk, rst        	: IN	std_logic; 
-      		parity        		: IN	std_logic; -- high when odd
+      		parity        		: IN	std_logic; -- to determine whether to sort odd-even or even-odd
       		rd_data       		: IN	datatrain;
       		wr_data      		: OUT	datatrain);
 	end component;
 
 	component counter is
-	-- 8 bit counter to keep track of how many clock cycles each SPP is processed for
+	-- 8 bit counter to keep track of how many clock cycles have passed while the sorting is going on
     	port(	clk, rst, en		: IN 	std_logic;
     		count 			: OUT	std_logic_vector(DATA_SIZE_MAX_BIT - 1 downto 0));
   	end component;
 
   	component flagger is
-	-- flags SPPs for bypass
+	-- flags isolated SPPs
     	port(	clk, rst       		: IN  	std_logic;
       		rd_data   		: IN  	datatrain;
       		wr_data  		: OUT 	datatrain);
   	end component;
 
 -- signals
-  	signal inter_reg   		: 	datatrain;
-  	signal inter_size  		: 	std_logic_vector((DATA_SIZE_MAX_BIT - 1) downto 0); 	
-  	signal bcid_addr 		: 	std_logic_vector(8 downto 0);
+  	signal inter_reg   		: 	datatrain;						-- internal shift register
+  	signal inter_size  		: 	std_logic_vector((DATA_SIZE_MAX_BIT - 1) downto 0); 	-- number of SPPs in internal shift register
+  	signal bcid_addr 		: 	std_logic_vector(8 downto 0);				
 	-- construct datatrain
 	signal cd_rst			:	std_logic;
 	signal cd_rd_data		:	datatrain_rd;
