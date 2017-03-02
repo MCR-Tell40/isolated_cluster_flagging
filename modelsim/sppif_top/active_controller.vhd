@@ -36,25 +36,20 @@ architecture a of active_controller is
 
 	-- Changed from variables to signals
 
-	-- TODO assign these
+	-- TODO assign these two
 	signal bcid_addr			:	std_logic_vector(8 downto 0);
 	signal bcid_size			:	std_logic_vector(7 downto 0);
-	-- in process variables
-	shared variable rd_state 		: 	integer;
+
+	-- in pipes
 	signal rd_data_store 			: 	datatrain_rd;
-	shared variable rd_processor_num 	: 	integer range 0 to (DATA_PROCESSOR_COUNT - 1);
 	signal rd_bcid_store			: 	std_logic_vector(8 downto 0);
 	signal rd_size_store			: 	std_logic_vector(7 downto 0);
 
 	-- for data formatting
 	signal rd_construct_store 		: 	datatrain_rd;
 	signal wr_destruct_store 		: 	datatrain_wr;
-	shared variable rd_iteration 		: 	integer range 0 to 7;
-	shared variable wr_iteration 		: 	integer range 0 to 7;
 	
-	-- out process variables
-	shared variable wr_state 		: 	integer;
-	shared variable wr_processor_num 	: 	integer range 0 to (DATA_PROCESSOR_COUNT - 1);
+	-- out process pipes
 	signal wr_data_store 			: 	datatrain_wr;
 	signal wr_bcid_store			: 	std_logic_vector(8 downto 0);
 	signal wr_size_store			: 	std_logic_vector(7 downto 0);
@@ -70,6 +65,13 @@ architecture a of active_controller is
 	signal dp_wr_addr			: 	dp_addr_vector;
 	signal dp_wr_data			: 	dp_wr_data_vector;
 	signal dp_wr_size			: 	dp_size_vector;
+
+	-- unavoidable shared variables (only required to be shared because of those two inifinitely looping processes)
+	-- read process variables
+	shared variable rd_state 		: 	natural;
+	shared variable rd_iteration		: 	natural range 0 to 7;
+	-- write process variables
+	shared variable wr_iteration 		: 	natural range 0 to 7;
 
 	component data_processor is
 		port(	clk, rst		: IN	std_logic;
@@ -108,17 +110,38 @@ architecture a of active_controller is
 			dp_wr_size(i));
 	end generate gen_processor;
 
--- working above here
-
+-- there must be a better way to achieve this than having two infinitely looping processes
+-- changing these would also allow me to remove the two shared variables (not ideal)
+	-- continuous input assignment	
+	rd_addr <= rd_bcid_store (4 downto 0) & std_logic_vector (to_unsigned(rd_iteration, RD_RAM_ADDR_SIZE - 5));
+	process
+	begin
+		for i in 0 to 24 * to_integer(unsigned(ct_data)) / (RD_WORD_SIZE - 1) loop
+			rd_data_store(to_integer(unsigned(ct_data)) * rd_iteration + i) <= "00000000" & rd_data(24 * (i + 1) - 1  downto 24 * i);
+		end loop;
+	end process;
+	
+	-- continuous output assignment	
+	wr_addr <= wr_bcid_store(4 downto 0) & std_logic_vector(to_unsigned(wr_iteration, WR_RAM_ADDR_SIZE - 5));
+	wr_data <= wr_data_store(wr_iteration);
+	process
+	begin
+		if processor_ready = X"FFFFFFFF" AND rd_state = 3 then -- active control complete
+			bypass_en <= '1';
+		end if;
+	end process;
+-- end of mad stuff
 
 	process(rst, clk, en)
+		variable rd_processor_num	:	natural range 0 to (DATA_PROCESSOR_COUNT - 1);
+
 	begin
 		if (rst = '1' OR en = '0') then
 
 			fifo_en 		<= '0';
 			rd_en 			<= '0';
 			wr_en 			<= '0';
-			ct_addr 		<= X"000";
+			ct_addr 		<= "000000000";	-- was wrong size: ct_addr length 9; X"000" length 12
 
 			rd_state 		:= 0;
 			rd_processor_num 	:= 0;
@@ -143,18 +166,18 @@ architecture a of active_controller is
 					rd_iteration 	:= 0;
 				else
 					-- flag for bypass
-					fifo_data 	<= ct_data;
+					fifo_data 	<= ct_data;	-- wrong size: fifo_data length 7; ct_data length 9
 					fifo_en 	<= '1';
 
 					-- prep for next addr
 					if bcid_addr = X"1FF" then
-						bcid_addr 	<= X"000";
+						bcid_addr 	<= "000000000";
 					else
 						bcid_addr 	<= bcid_addr + 1;
 					end if;
 					
 					if bcid_size = X"1FF" then
-						bcid_size 	<= X"000";
+						bcid_size 	<= "00000000";	-- was wrong size: bcid_size length 9; X"000" length 12
 					else
 						bcid_size 	<= bcid_size + 1;
 					end if;
@@ -182,7 +205,7 @@ architecture a of active_controller is
 
 					-- prep for next addr
 					if bcid_addr = X"1FF" then
-						bcid_addr 	<= X"000";
+						bcid_addr 	<= "000000000";	-- was wrong size: bcid_addr length 9; X"000" length 12
 					else
 						bcid_addr 	<= bcid_addr + 1;
 					end if;
@@ -198,16 +221,9 @@ architecture a of active_controller is
 		end if;
 	end process;
 	
-	-- continuous input assignment	
-	rd_addr <= rd_bcid_store (4 downto 0) & std_logic_vector (to_unsigned(rd_iteration, RD_RAM_ADDR_SIZE - 5));
-	process
-	begin
-		for i in 0 to 24 * to_integer(unsigned(ct_data)) / (RD_WORD_SIZE - 1) loop
-			rd_data_store(to_integer(unsigned(ct_data)) * rd_iteration + i) <= "00000000" & rd_data(24 * (i + 1) - 1  downto 24 * i);
-		end loop;
-	end process;
-
 	process(rst,clk) -- data out process
+		variable wr_state 		: 	natural;
+		variable wr_processor_num 	: 	natural range 0 to (DATA_PROCESSOR_COUNT - 1);
 	begin
 		if rst = '1' then
 			wr_en 			<= '0';
@@ -240,17 +256,6 @@ architecture a of active_controller is
 					wr_iteration 	:= wr_iteration + 1;
 				end if;
 			end if;
-		end if;
-	end process;
-	
-	-- continuous output assignment	
-	wr_addr <= wr_bcid_store(4 downto 0) & std_logic_vector(to_unsigned(wr_iteration, WR_RAM_ADDR_SIZE - 5));
-	wr_data <= wr_data_store(wr_iteration);
-
-	process
-	begin
-		if processor_ready = X"FFFFFFFF" AND rd_state = 3 then -- active control complete
-			bypass_en <= '1';
 		end if;
 	end process;
 end a;
