@@ -76,8 +76,6 @@ architecture a of data_processor is
       		wr_data  		: OUT 	datatrain);
   	end component;
 
--- variables
-  	shared variable state 		: 	integer range 0 to 4;
 -- signals
   	signal inter_reg   		: 	datatrain;
   	signal inter_size  		: 	std_logic_vector((DATA_SIZE_MAX_BIT - 1) downto 0); 	
@@ -146,7 +144,8 @@ architecture a of data_processor is
 	
 	
 	process(clk, rst)
-  		begin
+	  	variable state		: 	natural range 0 to 6;
+	begin
 		if (rst = '1') then
 			-- reset components
       			st_rst    			<= '1';

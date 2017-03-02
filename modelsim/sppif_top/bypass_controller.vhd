@@ -35,17 +35,17 @@ architecture a of bypass_controller is
 	signal bcid			: 	std_logic_vector(8 downto 0);
 	signal inter_reg 		: 	std_logic_vector(WR_WORD_SIZE - 1 downto 0);
 
-	shared variable spp_count 	: 	integer;
-	shared variable rd_iteration 	: 	integer range 0 to (RD_SPP_PER_BCID * RD_SPP_SIZE / RD_WORD_SIZE) - 1;
-	shared variable wr_iteration 	: 	integer range 0 to (WR_SPP_PER_BCID * WR_SPP_SIZE / WR_WORD_SIZE) - 1;
-	shared variable state 		: 	integer := 0;
-
 begin
-	rd_addr	<= bcid(4 downto 0) & std_logic_vector(to_unsigned(rd_iteration, RD_RAM_ADDR_SIZE - 5));
-	wr_addr	<= bcid(4 downto 0) & std_logic_vector(to_unsigned(wr_iteration, WR_RAM_ADDR_SIZE - 5));
-
 	process(clk, rst, en)
+			variable rd_iteration 	: 	natural range 0 to (RD_SPP_PER_BCID * RD_SPP_SIZE / RD_WORD_SIZE) - 1;
+			variable wr_iteration 	: 	natural range 0 to (WR_SPP_PER_BCID * WR_SPP_SIZE / WR_WORD_SIZE) - 1;		
+			variable spp_count 	: 	integer;
+			variable state 		: 	integer := 0;
 	begin
+		
+		rd_addr	<= bcid(4 downto 0) & std_logic_vector(to_unsigned(rd_iteration, RD_RAM_ADDR_SIZE - 5));
+		wr_addr	<= bcid(4 downto 0) & std_logic_vector(to_unsigned(wr_iteration, WR_RAM_ADDR_SIZE - 5));
+
 		if rst = '1' OR en = '0' then
 			bcid 			<= (others => '0');
 			--current_read_cycle	:= 0;

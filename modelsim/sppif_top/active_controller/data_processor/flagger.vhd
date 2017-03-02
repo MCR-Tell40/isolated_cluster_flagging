@@ -17,9 +17,9 @@ entity flagger is
 end entity;
 
 architecture a of flagger is
-	shared variable inter_reg 	: 	datatrain;
 begin
 	process(clk, rst)
+		variable inter_reg 	: 	datatrain;
 	begin
 		if rst = '1' then
 			wr_data <= reset_pattern_train;

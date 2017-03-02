@@ -30,8 +30,6 @@ entity sppif_top is
 end sppif_top;
 
 architecture a of sppif_top is
-	shared variable clk_count	: natural;	-- to keep track of number of clock cycles
-
 -- internal signal pipes
 	-- active controller pipes
 	signal ac_en_pipe		: std_logic;
@@ -223,6 +221,7 @@ architecture a of sppif_top is
 	end process;
 
 	process(rst, clk)
+		variable clk_count	: natural;	-- to keep track of number of clock cycles
 	begin
 	    	if rst = '1' then
 			-- reset the system
