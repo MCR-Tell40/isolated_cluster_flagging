@@ -111,9 +111,8 @@ package detector_constant_declaration is
   constant swap_BXID_interval           : std_logic_vector(15 downto 0) := X"0641";
   constant skip_BXID_jump               : std_logic_vector(11 downto 0) := X"00C";
 
-  -- Event Isolation Flagging
+  -- SPP Isolation Flagging
   -- Note: If used to make a std_logic_vector, use (CONSTANT - 1 downto 0)
-  constant MAX_FLAG_SIZE        	: integer := 128;
   constant IF_WORD_SIZE         	: integer := 24; 
   constant RAM_ADDR_SIZE        	: integer := 9;
   constant DATA_PROCESSOR_COUNT 	: integer := 16;
@@ -134,5 +133,16 @@ package detector_constant_declaration is
   constant BUFFER_LIFETIME      	: integer := 2048;
   	
   constant MAX_ADDR 			: integer := 128; -- Nick and Ben's guess
+
+  -- SPP structure
+  constant SPP_BCID_WIDTH		: integer := 9; -- number of bits taken up by SPP BCID
+  constant SPP_ADDR_WIDTH		: integer := 13; -- number of bits taken up by SPP address
+  constant SPP_HITMAP_WIDTH		: integer := 8; -- number of bits take up by SPP hitmap
+  constant SPP_WIDTH			: integer := SPP_BCID_WIDTH + SPP_ADDR_WIDTH + SPP_HITMAP_WIDTH; -- number of bits taken up by each SPP
+
+  -- GWT frame structure
+  constant GWT_HEADER_WIDTH		: integer := 4;	-- number of bits taken up by header 
+  constant GWT_PARITY_WIDTH		: integer := 4; -- number of bits taken up by spp parity - this is also the number of SPPs in the GWT frame
+  constant GWT_WIDTH			: integer := GWT_HEADER_WIDTH + (GWT_PARITY_WIDTH * (1 + SPP_WIDTH)); -- number of bits taken up by each SPP
 
 end detector_constant_declaration;

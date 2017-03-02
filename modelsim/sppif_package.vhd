@@ -10,8 +10,8 @@ use work.detector_constant_declaration.all;	-- constants file
 package sppif_package is
 
 ---Type definitions---
-	-- datatrain is an array of MAX_FLAG_SIZE (128) vectors, each with 32 elements
-	type datatrain 		is array (MAX_FLAG_SIZE - 1 downto 0)	of std_logic_vector(31 downto 0);
+	-- datatrain is an array of GWT_WIDTH vectors, each with 32 elements
+	type datatrain 		is array (GWT_WIDTH - 1 downto 0)	of std_logic_vector(31 downto 0);
 
 	-- datatrain_rd is an array of 8 vectors, each with RD_WORD_SIZE (384) elements
 	type datatrain_rd 	is array (7 downto 0)	of std_logic_vector(RD_WORD_SIZE - 1 downto 0);

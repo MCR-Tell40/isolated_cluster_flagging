@@ -129,7 +129,7 @@ architecture a of active_controller is
 
 		elsif rising_edge(clk) then
 			if rd_state = 0 then
-				if (ct_data <= MAX_FLAG_SIZE) AND (ct_data /= X"000") then
+				if (ct_data <= GWT_WIDTH) AND (ct_data /= X"000") then
 					-- mark as processed
 					fifo_data 	<= (others => '0');
 					fifo_en 	<= '1';
