@@ -14,7 +14,6 @@ force -freeze sim:/counter/rst 0 6.5ns
 
 force -freeze sim:/counter/en 1 10ns
 
-force -freeze sim:/counter/rst 1 99ns
-force -freeze sim:/counter/rst 0 105.5ns
+force -freeze sim:/counter/rst 1 60ns
 
-run 200
+run 100
