@@ -111,38 +111,37 @@ package detector_constant_declaration is
   constant swap_BXID_interval           : std_logic_vector(15 downto 0) := X"0641";
   constant skip_BXID_jump               : std_logic_vector(11 downto 0) := X"00C";
 
-  -- SPP Isolation Flagging
-  -- Note: If used to make a std_logic_vector, use (CONSTANT - 1 downto 0)
-  constant IF_WORD_SIZE         	: integer := 24; 
-  constant RAM_ADDR_SIZE        	: integer := 9;
-  constant DATA_PROCESSOR_COUNT 	: integer := 16;
-	
+  ---------SPP Isolation Flagging----------------------------------
+  -- Usage: (CONSTANT - 1 downto 0)
+
+  -- surely the following RD_ and WR_ constants should be equal to each other if this is to a drop-in module! 
   constant RD_WORD_SIZE         	: integer := 384;
   constant RD_SPP_SIZE          	: integer := 24;
   constant RD_SPP_PER_BCID      	: integer := 512;
-  constant RD_RAM_ADDR_SIZE     	: integer := 128; -- Nick and Ben's guess
-	
+
   constant WR_WORD_SIZE         	: integer := 512;
   constant WR_SPP_SIZE          	: integer := 32;
   constant WR_SPP_PER_BCID      	: integer := 512;
-  constant WR_RAM_ADDR_SIZE     	: integer := 128; -- Nick and Ben's guess
-	
-  constant COUNT_RAM_WORD_SIZE  	: integer := 9;
-	
+
+  -- not sure what this is supposed to represent
   constant DATA_SIZE_MAX_BIT    	: integer := 8;
-  constant BUFFER_LIFETIME      	: integer := 2048;
-  	
-  constant MAX_ADDR 			: integer := 128; -- Nick and Ben's guess
 
-  -- SPP structure
-  constant SPP_BCID_WIDTH		: integer := 9; -- number of bits taken up by SPP BCID
-  constant SPP_ADDR_WIDTH		: integer := 13; -- number of bits taken up by SPP address
-  constant SPP_HITMAP_WIDTH		: integer := 8; -- number of bits take up by SPP hitmap
-  constant SPP_WIDTH			: integer := SPP_BCID_WIDTH + SPP_ADDR_WIDTH + SPP_HITMAP_WIDTH; -- number of bits taken up by each SPP
+  -- taken from Bypass Controller generics - are the numbers correct?
+  constant ADDR_PER_RAM 		: integer := 32;
+  constant MAX_RAM_ADDR_STORE 		: integer := 512;
 
-  -- GWT frame structure
-  constant GWT_HEADER_WIDTH		: integer := 4;	-- number of bits taken up by header 
-  constant GWT_PARITY_WIDTH		: integer := 4; -- number of bits taken up by spp parity - this is also the number of SPPs in the GWT frame
-  constant GWT_WIDTH			: integer := GWT_HEADER_WIDTH + (GWT_PARITY_WIDTH * (1 + SPP_WIDTH)); -- number of bits taken up by each SPP
+--------------------------------------------------------------------
+  -- checked by Donal Murray below here
+  -- From count ram
+  constant SPP_BCID_WIDTH		: integer := 9; 	-- number of bits taken up by SPP BCID
+  constant COUNT_RAM_WORD_SIZE  	: integer := 8;		-- number of bits needed to provide the number of SPPs associated with this BCID
+  constant BUFFER_LIFETIME      	: integer := 2048;	-- maximum number of clock cycles for each data processor to complete its job
+
+  constant DATA_PROCESSOR_COUNT 	: integer := 16;	-- number of data processors
+  -- FIFO
+  constant SPP_PER_BCID			: integer := 16;	-- max number of SPPs in each BCID
+  constant FIFO_DEPTH			: integer := 512;	-- number of BCIDs able to be stored in FIFO at any time
+  -- Maximum address which I think should be 512 but nick and ben have as 128
+  constant MAX_ADDR 			: integer := 128; 	-- Nick and Ben's guess
 
 end detector_constant_declaration;
