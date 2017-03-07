@@ -29,7 +29,7 @@ begin
 			wr_data <= reset_pattern_train;
 			inter_reg <= reset_pattern_train;
 		elsif rising_edge(clk) then
-			for i in 0 to (GWT_WIDTH - 2) loop
+			for i in 0 to (MAX_ADDR - 2) loop
 				if ((i mod 2 = 0) AND (parity = '0')) then
 					-- even pass - compare 0 with 1, 2 with 3 etc
 					-- check if switch is required -- sorting by both Chip ID and column
@@ -45,10 +45,10 @@ begin
 				elsif ((i mod 2 = 1) AND (parity = '1')) then
 					-- odd pass compare 1 with 2, 3 with 4 etc
 					-- check if switch is required -- sorting by both Chip ID and column
-					if (i = GWT_WIDTH - 2) then
-						-- at max bit, do not change end bits
+					if (i = MAX_ADDR - 2) then
+						-- at max address, do not change end bits
 						inter_reg(0) <= rd_data(0);
-						inter_reg(GWT_WIDTH - 1) <= rd_data(GWT_WIDTH - 1);
+						inter_reg(MAX_ADDR - 1) <= rd_data(MAX_ADDR - 1);
 					else
 						if (to_integer(unsigned(rd_data(i + 1)(23 downto 14))) < to_integer(unsigned(rd_data(i + 2)(23 downto 14)))) then
 							-- make switch

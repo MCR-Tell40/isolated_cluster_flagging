@@ -26,9 +26,9 @@ begin
 		elsif rising_edge(clk) then
 			-- propagate first and last SPP - these are always edge cases, so not flagged
 			inter_reg(0) 			:= rd_data(0);
-			inter_reg(GWT_WIDTH - 1)	:= rd_data(GWT_WIDTH - 1);
+			inter_reg(MAX_ADDR - 1)	:= rd_data(MAX_ADDR - 1);
 
-			for i in 1 to (GWT_WIDTH - 2) loop
+			for i in 1 to (MAX_ADDR - 2) loop
 				-- if next SPP is all zeroes, must be edge case, so don't flag
 				if (rd_data(i+1) = x"00_00_00_00") then
 					inter_reg(i) := rd_data(i);
