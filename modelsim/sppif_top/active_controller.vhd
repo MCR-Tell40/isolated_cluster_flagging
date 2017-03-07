@@ -10,59 +10,51 @@ use work.sppif_package.all;			-- custom type definitions
 entity active_controller is
 	port(	clk, rst, en		: IN	std_logic;
 
-		-- from ram
-		ct_addr			: OUT	std_logic_vector(8 downto 0);
-		ct_data			: IN	std_logic_vector(COUNT_RAM_WORD_SIZE - 1 downto 0);
+		-- from count ram
+		ram_bcid		: INOUT	std_logic_vector(SPP_BCID_WIDTH - 1 downto 0);
+		ram_size		: IN	std_logic_vector(COUNT_RAM_WORD_SIZE - 1 downto 0);
 
 		-- from router
 		rd_en			: OUT	std_logic;
-		rd_addr			: OUT	std_logic_vector(RD_RAM_ADDR_SIZE - 1 downto 0);
+		rd_addr			: INOUT	std_logic_vector(SPP_BCID_WIDTH - 1 downto 0);
 		rd_data			: IN	std_logic_vector(RD_WORD_SIZE - 1 downto 0);
 
 		-- to mep
 		wr_en			: OUT 	std_logic;
-		wr_addr 		: OUT 	std_logic_vector(WR_RAM_ADDR_SIZE - 1 downto 0);
+		wr_addr 		: OUT 	std_logic_vector(SPP_BCID_WIDTH - 1 downto 0);
 		wr_data 		: OUT	std_logic_vector(WR_WORD_SIZE - 1 downto 0);
 
 		-- to fifo
 		fifo_en 		: OUT 	std_logic;
-		fifo_data		: OUT 	std_logic_vector(6 downto 0);
+		fifo_data		: OUT 	std_logic_vector(SPP_BCID_WIDTH - 1 downto 0);
 
 		-- to bypass controller
 		bypass_en 		: OUT 	std_logic);
 end active_controller;
 
 architecture a of active_controller is
-
-	-- Changed from variables to signals
-
-	-- TODO assign these two
-	signal bcid_addr			:	std_logic_vector(8 downto 0);
-	signal bcid_size			:	std_logic_vector(7 downto 0);
+	
+	signal current_bcid			:	std_logic_vector(SPP_BCID_WIDTH - 1 downto 0);
 
 	-- in pipes
 	signal rd_data_store 			: 	datatrain_rd;
-	signal rd_bcid_store			: 	std_logic_vector(8 downto 0);
+	signal rd_bcid_store			: 	std_logic_vector(SPP_BCID_WIDTH - 1 downto 0);
 	signal rd_size_store			: 	std_logic_vector(7 downto 0);
-
-	-- for data formatting
-	signal rd_construct_store 		: 	datatrain_rd;
-	signal wr_destruct_store 		: 	datatrain_wr;
 	
 	-- out process pipes
 	signal wr_data_store 			: 	datatrain_wr;
-	signal wr_bcid_store			: 	std_logic_vector(8 downto 0);
+	signal wr_bcid_store			: 	std_logic_vector(SPP_BCID_WIDTH - 1 downto 0);
 	signal wr_size_store			: 	std_logic_vector(7 downto 0);
 
-	-- use the data processor types defined in eif_package to create signal arrays for the data processor array
+	-- use the data processor types defined in sppif_package to create signal arrays for the data processor array
 	signal processor_ready			: 	std_logic_vector(DATA_PROCESSOR_COUNT - 1 downto 0);
 	signal processor_complete		: 	std_logic_vector(DATA_PROCESSOR_COUNT - 1 downto 0);
 	signal dp_rd_en				:	std_logic_vector(DATA_PROCESSOR_COUNT - 1 downto 0);
-	signal dp_rd_addr			: 	dp_addr_vector;
+	signal dp_rd_bcid			: 	dp_bcid_vector;
 	signal dp_rd_data			: 	dp_rd_data_vector;
 	signal dp_rd_size			: 	dp_size_vector;
 	signal dp_wr_en				: 	std_logic_vector(DATA_PROCESSOR_COUNT - 1 downto 0);
-	signal dp_wr_addr			: 	dp_addr_vector;
+	signal dp_wr_bcid			: 	dp_bcid_vector;
 	signal dp_wr_data			: 	dp_wr_data_vector;
 	signal dp_wr_size			: 	dp_size_vector;
 
@@ -80,12 +72,12 @@ architecture a of active_controller is
 			processor_complete	: INOUT	std_logic;
 
 			rd_en			: IN	std_logic;
-			rd_addr			: IN	std_logic_vector(8 downto 0);
+			rd_bcid			: IN	std_logic_vector(SPP_BCID_WIDTH - 1 downto 0);
 			rd_data			: IN	datatrain_rd;
 			rd_size			: IN	std_logic_vector(DATA_SIZE_MAX_BIT - 1 downto 0);
 
 			wr_en			: IN	std_logic;
-			wr_addr			: OUT	std_logic_vector(8 downto 0);
+			wr_bcid			: OUT	std_logic_vector(SPP_BCID_WIDTH - 1  downto 0);
 			wr_data			: OUT	datatrain_wr;
 			wr_size			: INOUT	std_logic_vector(DATA_SIZE_MAX_BIT - 1 downto 0));
 	end component;
@@ -100,29 +92,29 @@ architecture a of active_controller is
 			processor_complete(i),
 
 			dp_rd_en(i),
-			dp_rd_addr(i),
+			dp_rd_bcid(i),
 			dp_rd_data(i),
 			dp_rd_size(i),
 
 			dp_wr_en(i),
-			dp_wr_addr(i),
+			dp_wr_bcid(i),
 			dp_wr_data(i),
 			dp_wr_size(i));
 	end generate gen_processor;
 
 -- there must be a better way to achieve this than having two infinitely looping processes
--- changing these would also allow me to remove the two shared variables (not ideal)
+-- changing these would also allow me to remove the two shared variables (which aren't ideal)
 	-- continuous input assignment	
-	rd_addr <= rd_bcid_store (4 downto 0) & std_logic_vector (to_unsigned(rd_iteration, RD_RAM_ADDR_SIZE - 5));
+	rd_addr <= rd_bcid_store (4 downto 0) & std_logic_vector (to_unsigned(rd_iteration, SPP_BCID_WIDTH - 5));
 	process
 	begin
-		for i in 0 to 24 * to_integer(unsigned(ct_data)) / (RD_WORD_SIZE - 1) loop
-			rd_data_store(to_integer(unsigned(ct_data)) * rd_iteration + i) <= "00000000" & rd_data(24 * (i + 1) - 1  downto 24 * i);
+		for i in 0 to RD_SPP_SIZE * to_integer(unsigned(ram_size)) / (RD_WORD_SIZE - 1) loop
+			rd_data_store(to_integer(unsigned(ram_size)) * rd_iteration + i) <= "00000000" & rd_data(RD_SPP_SIZE * (i + 1) - 1  downto RD_SPP_SIZE * i);
 		end loop;
 	end process;
 	
 	-- continuous output assignment	
-	wr_addr <= wr_bcid_store(4 downto 0) & std_logic_vector(to_unsigned(wr_iteration, WR_RAM_ADDR_SIZE - 5));
+	wr_addr <= wr_bcid_store(4 downto 0) & std_logic_vector(to_unsigned(wr_iteration, SPP_BCID_WIDTH - 5));
 	wr_data <= wr_data_store(wr_iteration);
 	process
 	begin
@@ -141,7 +133,7 @@ architecture a of active_controller is
 			fifo_en 		<= '0';
 			rd_en 			<= '0';
 			wr_en 			<= '0';
-			ct_addr 		<= "000000000";	-- was wrong size: ct_addr length 9; X"000" length 12
+			ram_bcid 		<= (others => '0');	-- was wrong size: ram_bcid length 9; X"000" length 12 - should be 9 bits (BCID)
 
 			rd_state 		:= 0;
 			rd_processor_num 	:= 0;
@@ -152,34 +144,34 @@ architecture a of active_controller is
 
 		elsif rising_edge(clk) then
 			if rd_state = 0 then
-				if (ct_data <= GWT_WIDTH) AND (ct_data /= X"000") then
+				if (ram_size <= MAX_ADDR) AND (ram_size /= X"000000000") then
 					-- mark as processed
 					fifo_data 	<= (others => '0');
 					fifo_en 	<= '1';
 
 					-- store addr and size
-					rd_bcid_store 	<= bcid_addr;
-					rd_size_store 	<= bcid_size;
+					rd_bcid_store 	<= rd_addr;
+					rd_size_store 	<= ram_size;
 
 					-- read data in
 					rd_state 	:= 1;
 					rd_iteration 	:= 0;
 				else
 					-- flag for bypass
-					fifo_data 	<= ct_data;	-- wrong size: fifo_data length 7; ct_data length 9
+					fifo_data 	<= ram_bcid;	-- pass bcid to fifo
 					fifo_en 	<= '1';
 
 					-- prep for next addr
-					if bcid_addr = X"1FF" then
-						bcid_addr 	<= "000000000";
+					if rd_addr = X"1FF" then
+						rd_addr 	<= (others => '0');
 					else
-						bcid_addr 	<= bcid_addr + 1;
+						rd_addr 	<= rd_addr + 1;
 					end if;
 					
-					if bcid_size = X"1FF" then
-						bcid_size 	<= "00000000";	-- was wrong size: bcid_size length 9; X"000" length 12
+					if ram_bcid = X"1FF" then
+						ram_bcid 	<= (others => '0');	-- was wrong size: ram_bcid length 9; X"000" length 12
 					else
-						bcid_size 	<= bcid_size + 1;
+						ram_bcid 	<= ram_bcid + 1;
 					end if;
 				end if;
 			elsif rd_state = 1 then
@@ -188,7 +180,7 @@ architecture a of active_controller is
 				rd_iteration 	:= rd_iteration + 1;
 
 				-- prep for next state
-				if rd_iteration = to_integer(unsigned(ct_data))/RD_WORD_SIZE then
+				if rd_iteration = to_integer(unsigned(ram_bcid))/RD_WORD_SIZE then
 					rd_state 	 := 2;
 					rd_processor_num := rd_processor_num + 1;
 				end if;
@@ -199,21 +191,22 @@ architecture a of active_controller is
 				else
 					-- processor free; pass data to processor
 					dp_rd_data(rd_processor_num) 		<= rd_data_store;
-					dp_rd_addr(rd_processor_num) 		<= rd_bcid_store;
+					dp_rd_bcid(rd_processor_num) 		<= rd_bcid_store;
 					dp_rd_size(rd_processor_num) 		<= rd_size_store;
 					processor_ready(rd_processor_num) 	<= '0';
 
 					-- prep for next addr
-					if bcid_addr = X"1FF" then
-						bcid_addr 	<= "000000000";	-- was wrong size: bcid_addr length 9; X"000" length 12
+					if rd_addr = X"1FF" then
+						-- at the end, reset to the first bcid
+						rd_addr 	<= (others => '0');	-- was wrong size: rd_bcid length 9; X"000" length 12
 					else
-						bcid_addr 	<= bcid_addr + 1;
+						rd_addr 	<= rd_addr + 1;
 					end if;
 					
-					if bcid_addr = max_addr then
-						rd_state 	:= 3; -- state with no logic
+					if rd_addr = MAX_ADDR then
+						rd_state	:= 3; -- state with no logic
 					else
-						bcid_addr 	<= bcid_addr + 1;
+						rd_addr 	<= rd_addr + 1;
 						rd_state 	:= 0;
 					end if;
 				end if;
@@ -234,7 +227,7 @@ architecture a of active_controller is
 					-- collect from processor
 					wr_data_store 				<= dp_wr_data(wr_processor_num);
 					wr_size_store 				<= dp_wr_size(wr_processor_num);
-					wr_bcid_store 				<= dp_wr_addr(wr_processor_num);
+					wr_bcid_store 				<= dp_wr_bcid(wr_processor_num);
 
 					-- signal collection
 					processor_complete(wr_processor_num) 	<= '0';
@@ -249,7 +242,7 @@ architecture a of active_controller is
 				end if;
 			elsif wr_state = 1 then -- read out 
 				-- check if last iteration
-				if wr_iteration * 16 >= to_integer(unsigned(wr_size_store)) then
+				if wr_iteration * SPP_PER_BCID >= to_integer(unsigned(wr_size_store)) then
 					wr_state 	:= 0;
 					wr_en 		<= '0';
 				else
