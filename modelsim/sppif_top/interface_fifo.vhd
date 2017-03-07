@@ -3,33 +3,30 @@
 library ieee;
 use ieee.std_logic_1164.all;
 use ieee.numeric_std.all;
- 
-entity interface_fifo is
-	generic ( constant DATA_WIDTH  	: 	positive := 7;
-		constant FIFO_DEPTH	: 	positive := 32);
+use work.detector_constant_declaration.all;	-- constants file
+use work.sppif_package.all;			-- custom type definitions
 
+entity interface_fifo is
 	port (	clk, rst		: IN	std_logic;
 		empty, full		: OUT	std_logic;
 
 		-- from active controller
 		wr_en			: IN	std_logic;
-		wr_data			: IN	std_logic_vector(DATA_WIDTH - 1 downto 0);
+		wr_data			: IN	std_logic_vector(SPP_BCID_WIDTH - 1 downto 0);
 
 		-- to bypass controller
 		rd_en			: IN	std_logic;
-		rd_data			: OUT	std_logic_vector(DATA_WIDTH - 1 downto 0));
+		rd_data			: OUT	std_logic_vector(SPP_BCID_WIDTH - 1 downto 0));
 end interface_fifo;
  
 architecture behavioural of interface_fifo is
 begin
 	-- Memory Pointer Process
 	fifo_proc : process (clk)
-		type fifo_memory is array (0 to FIFO_DEPTH - 1) of std_logic_vector(DATA_WIDTH - 1 downto 0);
-		variable memory : fifo_memory;
-		
-		variable head 	: natural range 0 to FIFO_DEPTH - 1;
-		variable tail 	: natural range 0 to FIFO_DEPTH - 1;
-		variable looped : boolean;
+		variable memory 	: fifo_memory;
+		variable head 		: natural range 0 to FIFO_DEPTH - 1;
+		variable tail 		: natural range 0 to FIFO_DEPTH - 1;
+		variable looped		: boolean;
 	begin
 		if rising_edge(clk) then
 			if rst = '1' then
