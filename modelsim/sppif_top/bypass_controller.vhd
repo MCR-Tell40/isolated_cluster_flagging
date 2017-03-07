@@ -17,12 +17,12 @@ entity bypass_controller is
 	
 		-- from router
 		rd_en			: OUT 	std_logic;
-		rd_addr 		: OUT 	std_logic_vector(RD_RAM_ADDR_SIZE - 1 downto 0);
+		rd_addr 		: OUT 	std_logic_vector(SPP_BCID_WIDTH - 1 downto 0);
 		rd_data 		: IN 	std_logic_vector(RD_WORD_SIZE - 1 downto 0);
 
 		-- to mep
 		wr_en			: OUT 	std_logic;
-		wr_addr 		: OUT 	std_logic_vector(WR_RAM_ADDR_SIZE - 1 downto 0);
+		wr_addr 		: OUT 	std_logic_vector(SPP_BCID_WIDTH - 1 downto 0);
 		wr_data 		: OUT	std_logic_vector(WR_WORD_SIZE - 1 downto 0);
 
 		-- from fifo
@@ -43,8 +43,8 @@ begin
 			variable state 		: 	integer := 0;
 	begin
 		
-		rd_addr	<= bcid(4 downto 0) & std_logic_vector(to_unsigned(rd_iteration, RD_RAM_ADDR_SIZE - 5));
-		wr_addr	<= bcid(4 downto 0) & std_logic_vector(to_unsigned(wr_iteration, WR_RAM_ADDR_SIZE - 5));
+		rd_addr	<= bcid(4 downto 0) & std_logic_vector(to_unsigned(rd_iteration, SPP_BCID_WIDTH - 5));
+		wr_addr	<= bcid(4 downto 0) & std_logic_vector(to_unsigned(wr_iteration, SPP_BCID_WIDTH - 5));
 
 		if rst = '1' OR en = '0' then
 			bcid 			<= (others => '0');
