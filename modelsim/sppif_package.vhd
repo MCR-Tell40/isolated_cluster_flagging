@@ -11,7 +11,7 @@ package sppif_package is
 
 ---Type definitions---
 	-- datatrain is an array of GWT_WIDTH vectors, each with 32 elements
-	type datatrain 		is array (GWT_WIDTH - 1 downto 0)	of std_logic_vector(31 downto 0);
+	type datatrain 		is array (MAX_ADDR - 1 downto 0)	of std_logic_vector(31 downto 0);
 
 	-- datatrain_rd is an array of 8 vectors, each with RD_WORD_SIZE (384) elements
 	type datatrain_rd 	is array (7 downto 0)	of std_logic_vector(RD_WORD_SIZE - 1 downto 0);
@@ -33,8 +33,11 @@ package sppif_package is
 	-- construct vector of datatrain_wr reset elements as a reset pattern for the datatrain
 	constant reset_pattern_wrtrain	: datatrain_wr	:= (others => reset_pattern_wr);
 
+-- Custom types for fifo
+	type fifo_memory is array (0 to FIFO_DEPTH - 1) of std_logic_vector(SPP_BCID_WIDTH - 1 downto 0);
+
 -- Custom types for array of data processors
-	type dp_addr_vector	is array (DATA_PROCESSOR_COUNT - 1 downto 0)	of std_logic_vector(8 downto 0);
+	type dp_bcid_vector	is array (DATA_PROCESSOR_COUNT - 1 downto 0)	of std_logic_vector(SPP_BCID_WIDTH - 1 downto 0);
 	type dp_rd_data_vector	is array (DATA_PROCESSOR_COUNT - 1 downto 0)	of datatrain_rd;
 	type dp_wr_data_vector	is array (DATA_PROCESSOR_COUNT - 1 downto 0)	of datatrain_wr;
 	type dp_size_vector	is array (DATA_PROCESSOR_COUNT - 1 downto 0)	of std_logic_vector(DATA_SIZE_MAX_BIT - 1 downto 0);
