@@ -29,12 +29,12 @@ entity data_processor is
 		processor_complete	: INOUT	std_logic;
 
 		rd_en			: IN	std_logic;
-		rd_addr			: IN	std_logic_vector(8 downto 0);
+		rd_bcid			: IN	std_logic_vector(SPP_BCID_WIDTH - 1 downto 0);
 		rd_data			: IN	datatrain_rd;
 		rd_size			: IN	std_logic_vector(DATA_SIZE_MAX_BIT - 1 downto 0); -- number of SPPs in datatrain
 
 		wr_en			: IN	std_logic;
-		wr_addr			: OUT	std_logic_vector(8 downto 0);
+		wr_bcid			: OUT	std_logic_vector(SPP_BCID_WIDTH - 1 downto 0);
 		wr_data			: OUT	datatrain_wr;
 		wr_size			: OUT	std_logic_vector(DATA_SIZE_MAX_BIT - 1 downto 0)); -- number of SPPs in datatrain
 end data_processor;
@@ -78,8 +78,8 @@ architecture a of data_processor is
 
 -- signals
   	signal inter_reg   		: 	datatrain;						-- internal shift register
-  	signal inter_size  		: 	std_logic_vector((DATA_SIZE_MAX_BIT - 1) downto 0); 	-- number of SPPs in internal shift register
-  	signal bcid_addr 		: 	std_logic_vector(8 downto 0);				
+  	signal inter_size  		: 	std_logic_vector(DATA_SIZE_MAX_BIT - 1 downto 0); 	-- number of SPPs in internal shift register
+  	signal current_bcid 		: 	std_logic_vector(SPP_BCID_WIDTH - 1 downto 0);				
 	-- construct datatrain
 	signal cd_rst			:	std_logic;
 	signal cd_rd_data		:	datatrain_rd;
@@ -96,7 +96,7 @@ architecture a of data_processor is
   	-- counter
   	signal ct_rst    		: 	std_logic;
   	signal ct_en     		: 	std_logic;
-  	signal ct_count  		: 	std_logic_vector((DATA_SIZE_MAX_BIT - 1) downto 0);
+  	signal ct_count  		: 	std_logic_vector(DATA_SIZE_MAX_BIT - 1 downto 0);
 	-- flagger	
   	signal fl_rst     		: 	std_logic;     
   	signal fl_rd_data 		: 	datatrain;
@@ -168,7 +168,7 @@ architecture a of data_processor is
 				-- read in datatrain
 				inter_reg  		<= cd_wr_data;	-- read datatrain into intermediate shift register
         			inter_size 		<= rd_size;
-        			bcid_addr     		<= rd_addr;
+        			current_bcid   		<= rd_bcid;
 	
         			if (processor_ready = '0') then 
 					-- new data was read in
@@ -205,7 +205,7 @@ architecture a of data_processor is
 				-- output data
         			wr_data  		<= sd_wr_data;  -- pass destructed datatrain to output
         			processor_complete  	<= '1';
-        			wr_addr		     	<= bcid_addr;
+        			wr_bcid		     	<= current_bcid;
         			wr_size			<= inter_size; 	-- propagate size across
         			state 			:= 6;		-- change to state 6
 	    	  	elsif state = 6 then
