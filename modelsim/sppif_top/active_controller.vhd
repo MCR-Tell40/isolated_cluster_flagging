@@ -11,12 +11,12 @@ entity active_controller is
 	port(	clk, rst, en		: IN	std_logic;
 
 		-- from count ram
-		ram_bcid		: INOUT	std_logic_vector(SPP_BCID_WIDTH - 1 downto 0);
+		ram_bcid		: OUT	std_logic_vector(SPP_BCID_WIDTH - 1 downto 0);
 		ram_size		: IN	std_logic_vector(COUNT_RAM_WORD_SIZE - 1 downto 0);
 
 		-- from router
 		rd_en			: OUT	std_logic;
-		rd_addr			: INOUT	std_logic_vector(SPP_BCID_WIDTH - 1 downto 0);
+		rd_addr			: oUT	std_logic_vector(SPP_BCID_WIDTH - 1 downto 0);
 		rd_data			: IN	std_logic_vector(RD_WORD_SIZE - 1 downto 0);
 
 		-- to mep
@@ -29,7 +29,8 @@ entity active_controller is
 		fifo_data		: OUT 	std_logic_vector(SPP_BCID_WIDTH - 1 downto 0);
 
 		-- to bypass controller
-		bypass_en 		: OUT 	std_logic);
+		bypass_en 		: OUT 	std_logic;
+		bcid_in			: IN	std_logic_vector(SPP_BCID_WIDTH - 1 downto 0)); -- take current BCID from bypass controller
 end active_controller;
 
 architecture a of active_controller is
@@ -102,10 +103,14 @@ architecture a of active_controller is
 			dp_wr_size(i));
 	end generate gen_processor;
 
+
+	rd_addr <= rd_bcid_store (4 downto 0) & std_logic_vector (to_unsigned(rd_iteration, SPP_BCID_WIDTH - 5));
+	wr_addr <= wr_bcid_store(4 downto 0) & std_logic_vector(to_unsigned(wr_iteration, SPP_BCID_WIDTH - 5));
+	wr_data <= wr_data_store(wr_iteration);
+
 -- there must be a better way to achieve this than having two infinitely looping processes
 -- changing these would also allow me to remove the two shared variables (which aren't ideal)
 	-- continuous input assignment	
-	rd_addr <= rd_bcid_store (4 downto 0) & std_logic_vector (to_unsigned(rd_iteration, SPP_BCID_WIDTH - 5));
 	process
 	begin
 		for i in 0 to RD_SPP_SIZE * to_integer(unsigned(ram_size)) / (RD_WORD_SIZE - 1) loop
@@ -114,8 +119,6 @@ architecture a of active_controller is
 	end process;
 	
 	-- continuous output assignment	
-	wr_addr <= wr_bcid_store(4 downto 0) & std_logic_vector(to_unsigned(wr_iteration, SPP_BCID_WIDTH - 5));
-	wr_data <= wr_data_store(wr_iteration);
 	process
 	begin
 		if processor_ready = X"FFFFFFFF" AND rd_state = 3 then -- active control complete
@@ -150,7 +153,7 @@ architecture a of active_controller is
 					fifo_en 	<= '1';
 
 					-- store addr and size
-					rd_bcid_store 	<= rd_addr;
+					rd_bcid_store 	<= bcid_in;
 					rd_size_store 	<= ram_size;
 
 					-- read data in
@@ -158,20 +161,16 @@ architecture a of active_controller is
 					rd_iteration 	:= 0;
 				else
 					-- flag for bypass
-					fifo_data 	<= ram_bcid;	-- pass bcid to fifo
+					fifo_data 	<= bcid_in;	-- pass bcid to fifo
 					fifo_en 	<= '1';
 
-					-- prep for next addr
-					if rd_addr = X"1FF" then
+					-- reset if at end
+					if bcid_in = X"1FF" then
 						rd_addr 	<= (others => '0');
+						ram_bcid 	<= (others => '0');
 					else
-						rd_addr 	<= rd_addr + 1;
-					end if;
-					
-					if ram_bcid = X"1FF" then
-						ram_bcid 	<= (others => '0');	-- was wrong size: ram_bcid length 9; X"000" length 12
-					else
-						ram_bcid 	<= ram_bcid + 1;
+						rd_addr 	<= bcid_in + 1;
+						ram_bcid 	<= bcid_in + 1;
 					end if;
 				end if;
 			elsif rd_state = 1 then
@@ -180,7 +179,7 @@ architecture a of active_controller is
 				rd_iteration 	:= rd_iteration + 1;
 
 				-- prep for next state
-				if rd_iteration = to_integer(unsigned(ram_bcid))/RD_WORD_SIZE then
+				if rd_iteration = to_integer(unsigned(bcid_in))/RD_WORD_SIZE then
 					rd_state 	 := 2;
 					rd_processor_num := rd_processor_num + 1;
 				end if;
@@ -196,17 +195,17 @@ architecture a of active_controller is
 					processor_ready(rd_processor_num) 	<= '0';
 
 					-- prep for next addr
-					if rd_addr = X"1FF" then
+					if bcid_in = X"1FF" then
 						-- at the end, reset to the first bcid
 						rd_addr 	<= (others => '0');	-- was wrong size: rd_bcid length 9; X"000" length 12
 					else
-						rd_addr 	<= rd_addr + 1;
+						rd_addr 	<= bcid_in + 1;
 					end if;
 					
-					if rd_addr = MAX_ADDR then
+					if bcid_in = MAX_ADDR then
 						rd_state	:= 3; -- state with no logic
 					else
-						rd_addr 	<= rd_addr + 1;
+						rd_addr 	<= bcid_in + 1;
 						rd_state 	:= 0;
 					end if;
 				end if;
