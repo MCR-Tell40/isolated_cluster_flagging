@@ -15,8 +15,8 @@ entity sppif_top is
 	port(	clk, rst	: IN	std_logic;
 
 		-- train size ram interface
-		ct_addr		: OUT	std_logic_vector(SPP_BCID_WIDTH - 1 downto 0);		-- current bcid
-		ct_data		: IN	std_logic_vector(COUNT_RAM_WORD_SIZE - 1 downto 0);	-- number of spps in this bcid's ram
+		ram_bcid	: OUT	std_logic_vector(SPP_BCID_WIDTH - 1 downto 0);		-- current bcid
+		ram_size	: IN	std_logic_vector(COUNT_RAM_WORD_SIZE - 1 downto 0);	-- number of spps in this bcid's ram
 
 		-- from ram
 		rd_en		: OUT	std_logic;						-- read enable
@@ -33,34 +33,35 @@ architecture a of sppif_top is
 -- internal signal pipes
 	-- active controller pipes
 	signal ac_en_pipe		: std_logic;
-	signal ct_addr_pipe		: std_logic_vector(SPP_BCID_WIDTH - 1 downto 0);
-	signal ct_data_pipe		: std_logic_vector(COUNT_RAM_WORD_SIZE - 1 downto 0);
-	-- from router
+	-- count ram
+	signal ram_bcid_pipe		: std_logic_vector(SPP_BCID_WIDTH - 1 downto 0);
+	signal ram_size_pipe		: std_logic_vector(COUNT_RAM_WORD_SIZE - 1 downto 0);
+	-- router
 	signal ac_rd_en_pipe		: std_logic;
 	signal ac_rd_addr_pipe		: std_logic_vector(SPP_BCID_WIDTH - 1 downto 0);
 	signal ac_rd_data_pipe		: std_logic_vector(RD_WORD_SIZE - 1 downto 0);
-	-- to mep
+	-- mep
 	signal ac_wr_en_pipe 		: std_logic;
 	signal ac_wr_addr_pipe		: std_logic_vector(SPP_BCID_WIDTH - 1 downto 0);
 	signal ac_wr_data_pipe		: std_logic_vector(WR_WORD_SIZE - 1 downto 0);
 
 	-- fifo pipes
-	-- from active controller
+	-- active controller
 	signal fifo_wr_en_pipe		: std_logic;
 	signal fifo_wr_data_pipe	: std_logic_vector(SPP_BCID_WIDTH - 1 downto 0);
-	-- to bypass controller
+	-- bypass controller
 	signal fifo_rd_en_pipe		: std_logic;
 	signal fifo_rd_data_pipe 	: std_logic_vector(SPP_BCID_WIDTH - 1 downto 0);
 	signal fifo_empty_pipe 		: std_logic;
 
 	-- bypass controller pipes
-	-- from active controller
-	signal bypass_en_pipe 		: std_logic;
-	-- from router
+	-- active controller
+	signal by_en_pipe 		: std_logic;
+	-- router
 	signal by_rd_en_pipe		: std_logic; 
 	signal by_rd_addr_pipe		: std_logic_vector(SPP_BCID_WIDTH - 1 downto 0);
 	signal by_rd_data_pipe 		: std_logic_vector(RD_WORD_SIZE - 1 downto 0);
-	-- to mep
+	-- mep
 	signal by_wr_en_pipe 		: std_logic;
 	signal by_wr_addr_pipe 		: std_logic_vector(SPP_BCID_WIDTH - 1 downto 0);
 	signal by_wr_data_pipe 		: std_logic_vector(WR_WORD_SIZE - 1 downto 0);
@@ -71,8 +72,8 @@ architecture a of sppif_top is
 		port(	clk, rst, en		: IN	std_logic;
 
 			-- from ram
-			ct_addr			: OUT	std_logic_vector(8 downto 0);
-			ct_data			: IN	std_logic_vector(COUNT_RAM_WORD_SIZE - 1 downto 0);
+			ram_bcid		: OUT	std_logic_vector(8 downto 0);
+			ram_size		: IN	std_logic_vector(COUNT_RAM_WORD_SIZE - 1 downto 0);
 
 			-- from router
 			rd_en			: OUT	std_logic;
@@ -89,7 +90,8 @@ architecture a of sppif_top is
 			fifo_data		: OUT 	std_logic_vector(SPP_BCID_WIDTH - 1 downto 0);
 
 			-- to bypass controller
-			bypass_en 		: OUT 	std_logic);
+			bypass_en 		: OUT 	std_logic;
+			bcid_in			: IN	std_logic_vector(SPP_BCID_WIDTH - 1 downto 0)); -- take current BCID from bypass controller);
 	end component;
 
 	component interface_fifo is
@@ -133,8 +135,8 @@ architecture a of sppif_top is
 		en		=> ac_en_pipe,
 
 		-- from ram
-		ct_addr		=> ct_addr_pipe,
-		ct_data		=> ct_data_pipe,
+		ram_bcid	=> ram_bcid_pipe,
+		ram_size	=> ram_size_pipe,
 
 		-- from router
 		rd_en		=> ac_rd_en_pipe,
@@ -151,7 +153,8 @@ architecture a of sppif_top is
 		fifo_data	=> fifo_wr_data_pipe,
 
 		-- to bypass controller
-		bypass_en	=> bypass_en_pipe);
+		bypass_en	=> by_en_pipe,
+		bcid_in		=> by_rd_addr_pipe);
 
 	interface_fifo1 : interface_fifo
 	port map( clk		=> clk,
@@ -169,7 +172,7 @@ architecture a of sppif_top is
 	bypass_controller1 : bypass_controller
     	port map( clk 		=> clk,
 	    	rst     	=> rst,
-	    	en 		=> bypass_en_pipe,
+	    	en 		=> by_en_pipe,
 
 		-- from router
 		rd_en		=> by_rd_en_pipe,
@@ -187,12 +190,12 @@ architecture a of sppif_top is
 		fifo_empty  	=> fifo_empty_pipe);
 
 -- processes
-	ct_addr <= ct_addr_pipe;
-	ct_data_pipe <= ct_data;
+	ram_bcid <= ram_bcid_pipe;
+	ram_size_pipe <= ram_size;
 
 	process(clk)
 	begin
-		if bypass_en_pipe = '1' then
+		if by_en_pipe = '1' then
 			-- bypass this block
 			rd_addr 	<= by_rd_addr_pipe;
     			by_rd_data_pipe <= rd_data;
