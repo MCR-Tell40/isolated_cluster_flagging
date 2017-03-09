@@ -8,11 +8,7 @@ use ieee.std_logic_unsigned.all;
 use work.detector_constant_declaration.all;	-- constants file
 use work.sppif_package.all;			-- custom type definitions
 
-entity bypass_controller is
-	generic( ADDR_PER_RAM 		: 	integer := 32;
-		MAX_RAM_ADDR_STORE 	: 	integer := 512;
-		SPP_PER_ADDR 		: 	integer := 16);
-		
+entity bypass_controller is		
 	port(	clk, rst, en 		: IN 	std_logic;
 	
 		-- from router
@@ -27,12 +23,12 @@ entity bypass_controller is
 
 		-- from fifo
 		fifo_rd_en 		: OUT 	std_logic;
-		fifo_data		: IN  	std_logic_vector(6 downto 0);
+		fifo_data		: IN  	std_logic_vector(SPP_BCID_WIDTH - 1 downto 0);
 		fifo_empty  		: IN 	std_logic);
 end bypass_controller;
 
 architecture a of bypass_controller is
-	signal bcid			: 	std_logic_vector(8 downto 0);
+	signal bcid			: 	std_logic_vector(SPP_BCID_WIDTH - 1 downto 0);
 	signal inter_reg 		: 	std_logic_vector(WR_WORD_SIZE - 1 downto 0);
 
 begin
