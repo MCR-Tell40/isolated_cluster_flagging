@@ -129,6 +129,7 @@ package detector_constant_declaration is
   -- taken from Bypass Controller generics - are the numbers correct?
   constant ADDR_PER_RAM 		: integer := 32;
   constant MAX_RAM_ADDR_STORE 		: integer := 512;
+  constant SPP_PER_ADDR 		: integer := 16;
 
 --------------------------------------------------------------------
   -- checked by Donal Murray below here
