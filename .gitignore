@@ -10,6 +10,7 @@ modelsim/work/
 # General files
 *.txt
 *.log
+*.dat
 *.bak
 *transcript
 
