@@ -115,8 +115,8 @@ package detector_constant_declaration is
   -- Usage: (CONSTANT - 1 downto 0)
 
   -- surely the following RD_ and WR_ constants should be equal to each other if this is to a drop-in module! 
-  constant RD_WORD_SIZE         	: integer := 384;
-  constant RD_SPP_SIZE          	: integer := 24;
+  constant RD_WORD_SIZE         	: integer := 512;
+  constant RD_SPP_SIZE          	: integer := 32;
   constant RD_SPP_PER_BCID      	: integer := 512;
 
   constant WR_WORD_SIZE         	: integer := 512;
@@ -135,7 +135,7 @@ package detector_constant_declaration is
   -- checked by Donal Murray below here
   -- From count ram
   constant SPP_BCID_WIDTH		: integer := 9; 	-- number of bits taken up by SPP BCID
-  constant COUNT_RAM_WORD_SIZE  	: integer := 8;		-- number of bits needed to provide the number of SPPs associated with this BCID
+  constant COUNT_RAM_WORD_SIZE  	: integer := 8;		-- number of bits needed to provide the number of SPPs associated with this BCID (only need 
   constant BUFFER_LIFETIME      	: integer := 2048;	-- maximum number of clock cycles for each data processor to complete its job
 
   constant DATA_PROCESSOR_COUNT 	: integer := 16;	-- number of data processors
