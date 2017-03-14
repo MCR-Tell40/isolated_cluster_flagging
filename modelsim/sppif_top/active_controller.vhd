@@ -127,14 +127,14 @@ architecture a of active_controller is
 	process(rst, clk, en, rd_bcid_store)
 		variable rd_processor_num	:	natural range 0 to (DATA_PROCESSOR_COUNT - 1);
 		variable rd_state 		: 	natural;
-		variable rd_iteration		: 	natural range 0 to 7;
+		variable rd_iteration		: 	natural; --range 0 to 7;
 	begin
 
 		rd_addr <= rd_bcid_store (4 downto 0) & std_logic_vector (to_unsigned(rd_iteration, SPP_BCID_WIDTH - 5));
 
-		for i in 0 to RD_SPP_SIZE * to_integer(unsigned(ram_size)) / (RD_WORD_SIZE - 1) loop
-			rd_data_store(to_integer(unsigned(ram_size)) * rd_iteration + i) <= "00000000" & rd_data(RD_SPP_SIZE * (i + 1) - 1  downto RD_SPP_SIZE * i);
-		end loop;
+		--for i in 0 to RD_SPP_SIZE * to_integer(unsigned(ram_size)) / (RD_WORD_SIZE - 1) loop
+--			rd_data_store(to_integer(unsigned(ram_size)) * rd_iteration + i) <= "00000000" & rd_data(RD_SPP_SIZE * (i + 1) - 1  downto RD_SPP_SIZE * i);
+--		end loop;
 
 		if (rst = '1' OR en = '0') then
 
@@ -251,7 +251,13 @@ architecture a of active_controller is
 					wr_iteration 				:= 0;
 				else
 					-- check next processor
-					wr_processor_num 			:= wr_processor_num + 1;
+					if wr_processor_num = DATA_PROCESSOR_COUNT - 1 then
+						-- at last processor, go to first
+						wr_processor_num			:= 0;
+					else
+						-- go to next processor
+						wr_processor_num 			:= wr_processor_num + 1;
+					end if;
 				end if;
 			elsif wr_state = 1 then -- read out 
 				-- check if last iteration
