@@ -59,12 +59,13 @@ architecture a of active_controller is
 	signal dp_wr_data			: 	dp_wr_data_vector;
 	signal dp_wr_size			: 	dp_size_vector;
 
-	-- unavoidable shared variables (only required to be shared because of those two inifinitely looping processes)
+	-- unavoidable shared variables (only required to be shared because of the two assignment processes
+	-- not a good idea as behaviour is undefine for concurrent writes to the same variable by different processes
 	-- read process variables
-	shared variable rd_state 		: 	natural;
-	shared variable rd_iteration		: 	natural range 0 to 7;
+	--shared variable rd_state 		: 	natural;
+	--shared variable rd_iteration		: 	natural range 0 to 7;
 	-- write process variables
-	shared variable wr_iteration 		: 	natural range 0 to 7;
+	--shared variable wr_iteration 		: 	natural range 0 to 7;
 
 	component data_processor is
 		port(	clk, rst		: IN	std_logic;
@@ -104,33 +105,37 @@ architecture a of active_controller is
 	end generate gen_processor;
 
 
-	rd_addr <= rd_bcid_store (4 downto 0) & std_logic_vector (to_unsigned(rd_iteration, SPP_BCID_WIDTH - 5));
-	wr_addr <= wr_bcid_store(4 downto 0) & std_logic_vector(to_unsigned(wr_iteration, SPP_BCID_WIDTH - 5));
-	wr_data <= wr_data_store(wr_iteration);
+	--rd_addr <= rd_bcid_store (4 downto 0) & std_logic_vector (to_unsigned(rd_iteration, SPP_BCID_WIDTH - 5));
+--	wr_addr <= wr_bcid_store(4 downto 0) & std_logic_vector(to_unsigned(wr_iteration, SPP_BCID_WIDTH - 5));
+--	wr_data <= wr_data_store(wr_iteration);
 
--- there must be a better way to achieve this than having two infinitely looping processes
--- changing these would also allow me to remove the two shared variables (which aren't ideal)
-	-- continuous input assignment	
-	process
+--	-- input assignment	
+--	process(rd_data_store)
+--	begin
+--		for i in 0 to RD_SPP_SIZE * to_integer(unsigned(ram_size)) / (RD_WORD_SIZE - 1) loop
+--			rd_data_store(to_integer(unsigned(ram_size)) * rd_iteration + i) <= "00000000" & rd_data(RD_SPP_SIZE * (i + 1) - 1  downto RD_SPP_SIZE * i);
+--		end loop;
+--	end process;
+--	-- output assignment	
+--	process(processor_ready)
+--	begin
+--		if processor_ready = X"FFFFFFFF" AND rd_state = 3 then -- active control complete
+--			bypass_en <= '1';
+--		end if;
+--	end process;
+
+	process(rst, clk, en, rd_bcid_store)
+		variable rd_processor_num	:	natural range 0 to (DATA_PROCESSOR_COUNT - 1);
+		variable rd_state 		: 	natural;
+		variable rd_iteration		: 	natural range 0 to 7;
 	begin
+
+		rd_addr <= rd_bcid_store (4 downto 0) & std_logic_vector (to_unsigned(rd_iteration, SPP_BCID_WIDTH - 5));
+
 		for i in 0 to RD_SPP_SIZE * to_integer(unsigned(ram_size)) / (RD_WORD_SIZE - 1) loop
 			rd_data_store(to_integer(unsigned(ram_size)) * rd_iteration + i) <= "00000000" & rd_data(RD_SPP_SIZE * (i + 1) - 1  downto RD_SPP_SIZE * i);
 		end loop;
-	end process;
-	
-	-- continuous output assignment	
-	process
-	begin
-		if processor_ready = X"FFFFFFFF" AND rd_state = 3 then -- active control complete
-			bypass_en <= '1';
-		end if;
-	end process;
--- end of mad stuff
 
-	process(rst, clk, en)
-		variable rd_processor_num	:	natural range 0 to (DATA_PROCESSOR_COUNT - 1);
-
-	begin
 		if (rst = '1' OR en = '0') then
 
 			fifo_en 		<= '0';
@@ -211,12 +216,21 @@ architecture a of active_controller is
 				end if;
 			end if;
 		end if;
+
+		if processor_ready = X"FFFFFFFF" AND rd_state = 3 then -- active control complete
+			bypass_en <= '1';
+		end if;
 	end process;
 	
-	process(rst,clk) -- data out process
+	process(rst, clk, wr_bcid_store) -- data out process
 		variable wr_state 		: 	natural;
 		variable wr_processor_num 	: 	natural range 0 to (DATA_PROCESSOR_COUNT - 1);
+		variable wr_iteration 		: 	natural range 0 to 7;
 	begin
+		-- output assignment
+		wr_addr <= wr_bcid_store(4 downto 0) & std_logic_vector(to_unsigned(wr_iteration, SPP_BCID_WIDTH - 5));
+		wr_data <= wr_data_store(wr_iteration);
+
 		if rst = '1' then
 			wr_en 			<= '0';
 			wr_processor_num 	:= 0;
