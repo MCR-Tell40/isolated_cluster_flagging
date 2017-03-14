@@ -16,7 +16,7 @@ entity active_controller is
 
 		-- from router
 		rd_en			: OUT	std_logic;
-		rd_addr			: oUT	std_logic_vector(SPP_BCID_WIDTH - 1 downto 0);
+		rd_addr			: OUT	std_logic_vector(SPP_BCID_WIDTH - 1 downto 0);
 		rd_data			: IN	std_logic_vector(RD_WORD_SIZE - 1 downto 0);
 
 		-- to mep

@@ -210,9 +210,9 @@ architecture a of sppif_top is
     			ac_rd_data_pipe <= rd_data;
     			rd_en 		<= ac_rd_en_pipe;
 
-    			wr_addr <= ac_wr_addr_pipe;
-    			wr_data <= ac_wr_data_pipe;
-    			wr_en 	<= ac_wr_en_pipe;    	
+    			wr_addr 	<= ac_wr_addr_pipe;
+    			wr_data 	<= ac_wr_data_pipe;
+    			wr_en 		<= ac_wr_en_pipe;    	
 		end if;
 	end process;
 
