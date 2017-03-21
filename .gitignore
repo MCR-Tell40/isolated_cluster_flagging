@@ -9,7 +9,6 @@ modelsim/work/
 
 # General files
 *.txt
-*.log
 *.dat
 *.bak
 *transcript
@@ -30,3 +29,10 @@ modelsim/work/
 *.summary
 *.sof
 
+#Latex
+*.log
+*.aux
+*.nav
+*.out
+*.snm
+*.toc
