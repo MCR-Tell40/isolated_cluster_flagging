@@ -1,0 +1,153 @@
+% LHCb VELO upgrade presentation for 23 March 2017
+% Topic:    Isolation flagging module progress
+% Author:   Dónal Murray
+% Date:     21 March 2017
+
+% $Header$
+\documentclass{beamer}
+\mode<presentation>
+\usefonttheme{professionalfonts}
+\setbeamertemplate{footline}[text line]{%
+  \parbox{\linewidth}{\vspace*{-22pt}\tiny\insertshortauthor}}
+\setbeamertemplate{navigation symbols}{} % remove beamer symbols
+
+\usepackage[english]{babel}
+\usepackage[utf8]{inputenc}
+\usepackage{times}
+\usepackage[T1]{fontenc}
+\usepackage{pgf}
+
+\title{Event Isolation Flagging Module}
+\subtitle{Progress Update}
+\author[Dónal Murray\hspace*{80pt}donal.murray@cern.ch]{Dónal Murray \\
+  \vskip7pt
+  \tiny{donal.murray@cern.ch}
+}
+\institute{}
+\date{23 March 2017}
+
+\pgfdeclareimage[height=1.5cm]{university-logo}{UoMlogo}
+\logo{\pgfuseimage{university-logo}}
+
+% $Document$
+\begin{document}
+
+{
+\setbeamertemplate{footline}{} % do not display footer on titlepage
+\begin{frame}
+  \titlepage
+\end{frame}
+}
+\addtocounter{framenumber}{-1} % do not count titlepage in slide count
+
+\begin{frame}{Overview}
+  \tableofcontents
+\end{frame}
+
+
+% Structuring a talk is a difficult task and the following structure
+% may not be suitable. Here are some rules that apply for this
+% solution:
+
+% - Exactly two or three sections (other than the summary).
+% - At *most* three subsections per section.
+% - Talk about 30s to 2min per frame. So there should be between about
+%   15 and 30 frames, all told.
+
+% - A conference audience is likely to know very little of what you
+%   are going to talk about. So *simplify*!
+% - In a 20min talk, getting the main ideas across is hard
+%   enough. Leave out details, even if it means being less precise than
+%   you think necessary.
+% - If you omit details that are vital to the proof/implementation,
+%   just say so once. Everybody will be happy with that.
+
+\section{Concept}
+
+\subsection{Function of the event isolation flagging module}
+
+\begin{frame}{The event isolation flagging module}
+  \begin{itemize}
+  \item
+    Sorts columns in SPP
+  \item
+    Checks each column to see if it is isolated
+  \item
+    Either adds a flag bit or bypasses it
+  \end{itemize}
+\end{frame}
+
+
+
+\subsection{Flow diagrams}
+
+\begin{frame}{Flow diagrams}{Top level}
+\end{frame}
+
+\begin{frame}{Flow diagrams}{Sorter}
+\end{frame}
+
+
+\subsection{Block diagrams}
+
+\begin{frame}{Block diagrams}{Top level}
+\end{frame}
+
+\begin{frame}{Block diagrams}{Active controller}
+\end{frame}
+
+\begin{frame}{Block diagrams}{Data processor}
+\end{frame}
+
+
+
+\section{Implementation}
+
+\subsection{Implementation in VHDL}
+
+\begin{frame}{Implementation in VHDL}
+\end{frame}
+
+
+\subsection{Testing in Modelsim}
+
+\begin{frame}{Testing in Modelsim}
+\end{frame}
+
+
+\subsection{Incorporation into the full AMC40 Firmware}
+
+\begin{frame}{Incorporation into the full AMC40 Firmware}
+\end{frame}
+
+
+
+\section*{Summary}
+
+\begin{frame}{Summary}
+
+  % Keep the summary as short as possible
+  \begin{itemize}
+  \item
+    Implementation in Modelsim is complete
+  \item
+    Mid way through testing
+  \end{itemize}
+
+  % Next steps
+  \vskip0pt plus.5fill
+  \begin{itemize}
+  \item
+    Outlook
+    \begin{itemize}
+    \item
+      Complete testing in Modelsim
+    \item
+      Test as a standalone module in Quartus
+    \item
+      Incorporate into full AMC40 firmware
+    \end{itemize}
+  \end{itemize}
+\end{frame}
+
+\end{document}
