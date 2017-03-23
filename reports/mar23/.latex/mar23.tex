@@ -17,7 +17,7 @@
 \usepackage[T1]{fontenc}
 \usepackage{pgf}
 
-\title{Event Isolation Flagging Module}
+\title{SPP Isolation Flagging Module}
 \subtitle{Progress Update}
 \author[Dónal Murray\hspace*{80pt}donal.murray@cern.ch]{Dónal Murray \\
   \vskip7pt
@@ -64,40 +64,60 @@
 
 \section{Concept}
 
-\subsection{Function of the event isolation flagging module}
+\subsection{Function of the SPP isolation flagging module}
 
-\begin{frame}{The event isolation flagging module}
+\begin{frame}{The SPP isolation flagging module}
+  \begin{figure}
+    \includegraphics[scale=0.3]{Overview}
+    \caption{\centering Drop in module (shown as "Isolated Clusters" in this image) to check for isolated clusters.}
+  \end{figure}
+\end{frame}
+
+
+\begin{frame}{The event isolation flagging module}{Columns in the SPP}
+  \begin{figure}
+    \includegraphics[scale=0.3]{Columns}
+    \caption{\centering Columns with no neighbours are flagged. Doing this in the FPGA reduces load on CPU in software stage.}
+  \end{figure}
+\end{frame}
+
+\subsection{Block Diagrams}
+
+\begin{frame}{The event isolation flagging module}{Top level block Diagram}
+  \begin{figure}
+    \includegraphics[scale=0.4]{TopLevelBlock}
+  \end{figure}
   \begin{itemize}
-  \item
-    Sorts columns in SPP
-  \item
-    Checks each column to see if it is isolated
-  \item
-    Either adds a flag bit or bypasses it
+    \item
+      Checks each column in SPP to see if it is isolated.
+  \end{itemize}
+\end{frame}
+
+\begin{frame}{Active Control}
+  \begin{figure}
+    \includegraphics[scale=0.3]{ActiveControl}
+  \end{figure}
+  \begin{itemize}
+    \item
+      Assigns tasks to the next free data processor
+    \item
+      Keeps track of clock cycles.
+  \end{itemize}
+\end{frame}
+
+\begin{frame}{Data Processor}
+  \begin{figure}
+    \includegraphics[scale=0.3]{DataProcessor}
+  \end{figure}
+  \begin{itemize}
+    \item
+
+    \item
+
   \end{itemize}
 \end{frame}
 
 
-
-\subsection{Flow diagrams}
-
-\begin{frame}{Flow diagrams}{Top level}
-\end{frame}
-
-\begin{frame}{Flow diagrams}{Sorter}
-\end{frame}
-
-
-\subsection{Block diagrams}
-
-\begin{frame}{Block diagrams}{Top level}
-\end{frame}
-
-\begin{frame}{Block diagrams}{Active controller}
-\end{frame}
-
-\begin{frame}{Block diagrams}{Data processor}
-\end{frame}
 
 
 
@@ -106,18 +126,40 @@
 \subsection{Implementation in VHDL}
 
 \begin{frame}{Implementation in VHDL}
+  \begin{itemize}
+    \item
+      Using code started by masters students last year
+    \item
+      Code now compiles and can be simulated in Modelsim.
+    \end{itemize}
 \end{frame}
 
 
 \subsection{Testing in Modelsim}
 
 \begin{frame}{Testing in Modelsim}
+  \begin{itemize}
+    \item
+      All low level blocks tested and working
+    \item
+      Generated random data packages to test at top level
+    \item
+      Next step: test with realistic data.
+  \end{itemize}
 \end{frame}
 
 
 \subsection{Incorporation into the full AMC40 Firmware}
 
 \begin{frame}{Incorporation into the full AMC40 Firmware}
+  \begin{itemize}
+    \item
+      Cloned the full AMC40 firmware repository (velo24 branch)
+    \item
+      Inserted data processing block
+    \item
+      Next step: ... .
+  \end{itemize}
 \end{frame}
 
 
@@ -129,9 +171,9 @@
   % Keep the summary as short as possible
   \begin{itemize}
   \item
-    Implementation in Modelsim is complete
+    Implementation in Modelsim is complete; mid way through testing
   \item
-    Mid way through testing
+
   \end{itemize}
 
   % Next steps
@@ -141,11 +183,11 @@
     Outlook
     \begin{itemize}
     \item
-      Complete testing in Modelsim
+      Complete testing in Modelsim with realistic data
     \item
       Test as a standalone module in Quartus
     \item
-      Incorporate into full AMC40 firmware
+      Incorporate into full AMC40 firmware.
     \end{itemize}
   \end{itemize}
 \end{frame}
