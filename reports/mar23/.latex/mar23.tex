@@ -40,7 +40,7 @@
 }
 \addtocounter{framenumber}{-1} % do not count titlepage in slide count
 
-\begin{frame}{Overview}
+\begin{frame}{Presentation Overview}
   \tableofcontents
 \end{frame}
 
@@ -69,7 +69,8 @@
 \begin{frame}{The SPP isolation flagging module}
   \begin{figure}
     \includegraphics[scale=0.3]{Overview}
-    \caption{\centering Drop in module (shown as "Isolated Clusters" in this image) to check for isolated clusters.}
+    \caption{\centering Drop in module (shown as "Isolated Clusters" in this
+    image) to check for isolated clusters.}
   \end{figure}
 \end{frame}
 
@@ -77,7 +78,8 @@
 \begin{frame}{The event isolation flagging module}{Columns in the SPP}
   \begin{figure}
     \includegraphics[scale=0.3]{Columns}
-    \caption{\centering Columns with no neighbours are flagged. Doing this in the FPGA reduces load on CPU in software stage.}
+    \caption{\centering Columns with no neighbours are flagged. Doing this in
+    the FPGA reduces load on CPU in software stage.}
   \end{figure}
 \end{frame}
 
@@ -86,40 +88,9 @@
 \begin{frame}{The event isolation flagging module}{Top level block Diagram}
   \begin{figure}
     \includegraphics[scale=0.4]{TopLevelBlock}
+    \caption{Checks each column in SPP to see if it is isolated.}
   \end{figure}
-  \begin{itemize}
-    \item
-      Checks each column in SPP to see if it is isolated.
-  \end{itemize}
 \end{frame}
-
-\begin{frame}{Active Control}
-  \begin{figure}
-    \includegraphics[scale=0.3]{ActiveControl}
-  \end{figure}
-  \begin{itemize}
-    \item
-      Assigns tasks to the next free data processor
-    \item
-      Keeps track of clock cycles.
-  \end{itemize}
-\end{frame}
-
-\begin{frame}{Data Processor}
-  \begin{figure}
-    \includegraphics[scale=0.3]{DataProcessor}
-  \end{figure}
-  \begin{itemize}
-    \item
-
-    \item
-
-  \end{itemize}
-\end{frame}
-
-
-
-
 
 \section{Implementation}
 
@@ -128,9 +99,21 @@
 \begin{frame}{Implementation in VHDL}
   \begin{itemize}
     \item
-      Using code started by masters students last year
+      Building on code started by masters students last year
+      \begin{itemize}
+        \item
+          Active controller did not compile
+        \item
+          Only implemented one data processor, needed sixteen
+        \item
+          Blocks did not interface together: length mismatches
+        \item
+          Data was expected in a different format from the actual format
+      \end{itemize}
     \item
-      Code now compiles and can be simulated in Modelsim.
+      Existing blocks fixed and all functionality added
+    \item
+      The code now compiles and simulates in Modelsim.
     \end{itemize}
 \end{frame}
 
@@ -140,11 +123,25 @@
 \begin{frame}{Testing in Modelsim}
   \begin{itemize}
     \item
-      All low level blocks tested and working
+      Designed tests for all low level blocks individually
+      \begin{itemize}
+        \item
+          Counter, sorter, flagger blocks all tested and working
+        \item
+          Wrote a program in C++ to generate random data packages to test data processors, which function as intended
+      \end{itemize}
     \item
-      Generated random data packages to test at top level
+      Mid level blocks
+      \begin{itemize}
+        \item
+          Some issues with the active controller
+        \item
+          Bypass controller functioning as expected
+        \item
+          FIFO functioning as expected
+      \end{itemize}
     \item
-      Next step: test with realistic data.
+      Top level cannot be tested until active controller is working
   \end{itemize}
 \end{frame}
 
@@ -155,11 +152,15 @@
   \begin{itemize}
     \item
       Cloned the full AMC40 firmware repository (velo24 branch)
+      \begin{itemize}
+        \item
+          Not working with data processing block - vhd file containing entity definition missing
+        \item
+          Fixed problem and compiled -- need to check this fix with Karol
+      \end{itemize}
     \item
-      Inserted data processing block
-    \item
-      Next step: ... .
-  \end{itemize}
+      Currently working on simulating the AMC40 firmware in Modelsim
+    \end{itemize}
 \end{frame}
 
 
@@ -173,7 +174,7 @@
   \item
     Implementation in Modelsim is complete; mid way through testing
   \item
-
+    A few issues, mostly with active controller
   \end{itemize}
 
   % Next steps
