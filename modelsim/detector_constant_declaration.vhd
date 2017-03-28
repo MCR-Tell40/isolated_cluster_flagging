@@ -115,13 +115,13 @@ package detector_constant_declaration is
   -- Usage: (CONSTANT - 1 downto 0)
 
   -- surely the following RD_ and WR_ constants should be equal to each other if this is to a drop-in module! 
-  constant RD_WORD_SIZE         	: integer := 512;
+  constant RD_WORD_SIZE         	: integer := 256;
   constant RD_SPP_SIZE          	: integer := 32;
-  constant RD_SPP_PER_BCID      	: integer := 512;
+  constant RD_SPP_PER_BCID      	: integer := 256;
 
-  constant WR_WORD_SIZE         	: integer := 512;
+  constant WR_WORD_SIZE         	: integer := 256;
   constant WR_SPP_SIZE          	: integer := 32;
-  constant WR_SPP_PER_BCID      	: integer := 512;
+  constant WR_SPP_PER_BCID      	: integer := 256;
 
   -- not sure what this is supposed to represent
   constant DATA_SIZE_MAX_BIT    	: integer := 8;

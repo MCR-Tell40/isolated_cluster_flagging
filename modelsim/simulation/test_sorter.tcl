@@ -20,12 +20,6 @@ force -freeze sim:/sorter/clk 1 0, 0 {3125 ps} -r 6.25ns
 force -freeze sim:/sorter/rst 1 1
 force -freeze sim:/sorter/rst 0 5ns
 
-when {rising_edge(sim:/sorter/parity)} {
-	for {set i 0}  {$i < 128} {incr i} {
-		set /sorter/wr_data($i) /sorter/rd_data($i)
-	}
-}
-
 force -freeze sim:/sorter/parity 1 0, 0 {20ns} -r 40ns
 
 run 100

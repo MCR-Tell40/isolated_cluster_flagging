@@ -25,7 +25,7 @@ begin
 		else
 			-- load rd_data into inter_reg, split up into individual SPPs
 			for i in 0 to 7 loop
-				for j in 0 to 15 loop
+				for j in 0 to 7 loop
 					inter_reg(i)((32 * (j + 1)) - 1 downto 32 * j)	<= rd_data(16 * i + j);
 				end loop;
 			end loop;

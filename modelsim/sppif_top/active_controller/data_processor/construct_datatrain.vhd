@@ -24,7 +24,7 @@ begin
 		else
 			-- load rd_data into inter_reg, split up and pad with zeroes to make a 32bit SPP
 			for i in 0 to 7 loop
-				for j in 0 to 15 loop
+				for j in 0 to 7 loop
 					inter_reg(16 * i + j) <= "00000000" & rd_data(i)(24 * (j + 1) - 1 downto 24 * j);
 				end loop;
 			end loop;

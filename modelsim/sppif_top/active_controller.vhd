@@ -142,6 +142,7 @@ architecture a of active_controller is
 			rd_en 			<= '0';
 			wr_en 			<= '0';
 			ram_bcid 		<= (others => '0');	-- was wrong size: ram_bcid length 9; X"000" length 12 - should be 9 bits (BCID)
+			rd_addr			<= (others => '0');
 
 			rd_state 		:= 0;
 			rd_processor_num 	:= 0;
@@ -169,7 +170,7 @@ architecture a of active_controller is
 					fifo_data 	<= bcid_in;	-- pass bcid to fifo
 					fifo_en 	<= '1';
 
-					-- reset if at end
+					--reset if at end
 					if bcid_in = X"1FF" then
 						rd_addr 	<= (others => '0');
 						ram_bcid 	<= (others => '0');
