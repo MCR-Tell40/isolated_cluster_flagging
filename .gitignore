@@ -36,3 +36,6 @@ modelsim/work/
 *.out
 *.snm
 *.toc
+*.synctex.gz
+*.latex
+*.latex.json
