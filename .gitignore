@@ -1,6 +1,7 @@
 # Directories
 modelsim/.ref/
 modelsim/work/
+quartus/db
 
 # Temp files
 *~
@@ -28,6 +29,8 @@ modelsim/work/
 *.sld
 *.summary
 *.sof
+*.rdr.flock
+*.qmsg
 
 #Latex
 *.log
