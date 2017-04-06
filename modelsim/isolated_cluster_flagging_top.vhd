@@ -16,26 +16,26 @@ library work;
 use work.GDP_pack.all;
 
 entity isolated_cluster_flagger_top is
-    port (
-        --inputs
-        -- post_router_top interface
-        i_Clock_160MHz      : in  std_logic; -- clk
-        i_reset             : in  std_logic; -- reset or bxid delay reset
+    	port (
+        	--inputs
+        	-- post_router_top interface
+        	i_Clock_160MHz      : in  std_logic; -- clk
+        	i_reset             : in  std_logic; -- reset or bxid delay reset
+	
+        	i_sppram_id         : in natural range 0 to 15; -- id of the ram giving the data
+        	i_sppram_id_dv 	    : in std_logic;
+        	i_ram_counter       : in std_logic_vector(sppram_w_seg_size - 1 downto 0);
+        	-- inflactionary_block interface
+        	i_infl_bus          : in std_logic_vector(511 downto 0); -- output of inflactionary_block
 
-        i_sppram_id         : in natural range 0 to 15; -- id of the ram giving the data
-        i_sppram_id_dv 	    : in std_logic;
-        i_ram_counter       : in std_logic_vector(sppram_w_seg_size - 1 downto 0);
-        -- inflactionary_block interface
-        i_infl_bus          : in std_logic_vector(511 downto 0); -- output of inflactionary_block
-
-        --output
-        -- edge_detector interface
-        o_sppram_id         : out natural range 0 to 15;
-        o_sppram_id_dv 	    : out std_logic;
-        o_ram_counter       : out std_logic_vector(sppram_w_seg_size - 1 downto 0);
-        -- output_fifo interface
-        o_fifo_bus          : out std_logic_vector(511 downto 0)
-);
+        	--output
+        	-- edge_detector interface
+        	o_sppram_id         : out natural range 0 to 15;
+        	o_sppram_id_dv 	    : out std_logic;
+        	o_ram_counter       : out std_logic_vector(sppram_w_seg_size - 1 downto 0);
+        	-- output_fifo interface
+        	o_fifo_bus          : out std_logic_vector(511 downto 0)
+	);
 end isolated_cluster_flagger_top;
 
 architecture a of isolated_cluster_flagger_top is
@@ -46,16 +46,16 @@ architecture a of isolated_cluster_flagger_top is
             i_reset             : in  std_logic;
 
             i_enable            : in std_logic;
-            i_sppram_id_dv 	    : in std_logic;
+            i_sppram_id_dv 	: in std_logic;
             i_ram_counter       : in std_logic_vector(sppram_w_seg_size - 1 downto 0);
-            i_bus               : in std_logic_vector(511 downto 0)
+            i_bus               : in std_logic_vector(511 downto 0);
 
             o_enable            : out std_logic;
-            o_sppram_id_dv 	    : out std_logic;
-            o_ram_counter       : out std_logic_vector(sppram_w_seg_size - 1 downto 0)
+            o_sppram_id_dv 	: out std_logic;
+            o_ram_counter       : out std_logic_vector(sppram_w_seg_size - 1 downto 0);
             o_bus               : out std_logic_vector(511 downto 0)
         );
-    end component;
+    end component icf_processor;
 
     -- SIGNALS
     signal dp_i_enable          : std_logic_vector(15 downto 0);
@@ -63,29 +63,28 @@ architecture a of isolated_cluster_flagger_top is
 
 begin
     --generate 16 processors -- their enable determines when they should interact with the shared pipes
-    begin gen_processor:
+    GEN_ICF_PROCESSOR : 
 	for i in 0 to 15 generate
-		ICF_PROCESSOR : icf_processor
+	ICF_PROCESSORx: icf_processor
 		port map(
-            i_Clock_160MHz,
-            i_reset,
-
+            		i_Clock_160MHz,
+            		i_reset,
 			dp_i_enable(i),
 			i_sppram_id_dv,
 			i_ram_counter,
-            i_bus, -- shared input data pipe
-
-			o_enable(i),
+            		i_infl_bus, -- shared input data pipe
+	
+			dp_o_enable(i),
 			o_sppram_id_dv,
 			o_ram_counter,
-    		o_bus -- shared input data pipe
-        );
+    			o_fifo_bus -- shared output data pipe
+        	);
 	end generate;
 
-    -- passthrough stream--
+    --passthrough stream--
     o_sppram_id     <= i_sppram_id;
     o_sppram_id_dv  <= i_sppram_id_dv;
     o_ram_counter   <= i_ram_counter;
     o_fifo_bus      <= i_infl_bus;
-    -----------------------
+    ----------------------
 end a;
