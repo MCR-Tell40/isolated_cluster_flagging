@@ -85,7 +85,7 @@ constant deep_fifo_align : integer := 9;
 constant deep_fifo_info_data_dec : integer := deep_fifo_data_dec;
 
 -----------------------------> ICF ----------------------------------------------------------------------------------------------------
-type spp_array is array (15 downto 0) of std_logic_vector(31 downto 0);
+type spp_array is array (63 downto 0) of std_logic_vector(31 downto 0);
 
 
 end package;
