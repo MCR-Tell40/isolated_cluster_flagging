@@ -1,7 +1,9 @@
 # Directories
 modelsim/.ref/
 modelsim/work/
-quartus/db
+modelsim/libraries/
+modelsim/mep/
+quartus/db/
 
 # Temp files
 *~
