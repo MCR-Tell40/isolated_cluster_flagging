@@ -1,4 +1,6 @@
-add wave -noupdate -divider Test\ Counter
+vsim work.counter
+
+add wave -noupdate -divider Counter\ Test
 
 add wave -position end  sim:/counter/clk
 add wave -position end  sim:/counter/en
@@ -12,6 +14,4 @@ force -freeze sim:/counter/rst 0 6.5ns
 
 force -freeze sim:/counter/en 1 10ns
 
-force -freeze sim:/counter/rst 1 60ns
-
-run 100
+run 1600
