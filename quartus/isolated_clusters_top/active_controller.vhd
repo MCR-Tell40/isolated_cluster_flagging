@@ -109,7 +109,7 @@ architecture control of active_controller is
 	
 	dp_rd_data <= rd_data;
 	dp_rd_bcid <= rd_addr;
-	dp_rd_size <= ram_size
+	dp_rd_size <= ram_size;
 	
 	process(rst, clk)
 	begin

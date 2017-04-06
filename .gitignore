@@ -3,7 +3,7 @@ modelsim/.ref/
 modelsim/work/
 modelsim/libraries/
 modelsim/mep/
-quartus/db/
+quartus/db/isolated*
 
 # Temp files
 *~
