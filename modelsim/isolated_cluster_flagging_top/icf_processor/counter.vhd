@@ -21,7 +21,7 @@ end entity;
 
 architecture a of counter is
 	-- intermediate shift register
-	signal s_count	: 	std_logic_vector(75 - 1 downto 0);
+	signal s_count	: 	std_logic_vector(7 downto 0);
 begin
 	o_count	<= s_count;
 
@@ -33,7 +33,7 @@ begin
 			if (s_count = X"FF") then -- 255 is too high, should be 80 (x50) -- but anyway doesn't need to be here!
 				s_count 	<= X"00";
 			else
-				s_count 	<= s_count + 1;
+				s_count 	<= std_logic_vector(unsigned(s_count) + 1);
 			end if;
 		end if;
 	end process;
