@@ -31,18 +31,18 @@ begin
 		elsif rising_edge(clk) then
 			-- propagate first and last SPP - these are always edge cases, so not flagged
 			s_data(0) 				<= i_data(0);
-			s_data(15)				<= i_data(15);
+			s_data(63)				<= i_data(63);
 
-			for i in 1 to (14) loop
+			for i in 1 to 62 loop
 				-- if next spp is all zeroes, must be edge case, so don't flag
 				if (i_data(i+1) = x"00000000") then
 					s_data(i) <= i_data(i);
 				else
 					-- check if isolated by seeing if the columns to either side are empty
-					if (to_integer(unsigned(i_data(i)(13 downto 8))) - to_integer(unsigned(i_data(i-1)(13 downto 8))) > 1) AND
-					(to_integer(unsigned(i_data(i+1)(13 downto 8))) - to_integer(unsigned(i_data(i)(13 downto 8))) > 1) then
+					if (to_integer(unsigned(i_data(i)(13 downto 8))) - to_integer(unsigned(i_data(i-1)(13 downto 8))) > 1) and 
+					   (to_integer(unsigned(i_data(i+1)(13 downto 8))) - to_integer(unsigned(i_data(i)(13 downto 8))) > 1) then
 						-- cluster is isolated, flag by setting the MSB to 1
-						s_data(i) <= i_data(i) OR x"80000000";
+						s_data(i) <= i_data(i) or x"80000000";
 					else
 						-- cluster is not isolated
 						s_data(i) <= i_data(i);
