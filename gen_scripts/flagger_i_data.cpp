@@ -84,29 +84,10 @@ int main() {
     }
   }
 
-  // open output files
-  ofstream unsorted("sorter_unsorted.tcl");
-  if (unsorted.fail()) {
+  // open output file
+  ofstream data_in("flagger_i_data.tcl");
+  if (data_in.fail()) {
     cerr << "Error: file failed to open.\n";
-    return 1;
-  }
-  ofstream sorted("sorter_sorted.dat");
-  if (sorted.fail()) {
-    cerr << "Error: file failed to open.\n";
-    return 1;
-  }
-
-  // write out columns to file in tcl format
-  int i = 0;
-  for (auto it = columns.begin(); it != columns.end(); it++) {
-    unsorted << "mem load -filltype value -filldata " << it->get_bin()
-             << " -fillradix binary sim:/flagger/i_data(" << i++ << ")\n";
-  }
-
-  // close file
-  unsorted.close();
-  if (unsorted.fail()) {
-    cerr << "Error: could not save unsorted columns to file.\n";
     return 1;
   }
 
@@ -115,15 +96,17 @@ int main() {
          return lhs.get_value() < rhs.get_value();
        });
 
-  // write out sorted columns to file
+  // write out columns to file in tcl format
+  int i = 0;
   for (auto it = columns.begin(); it != columns.end(); it++) {
-    sorted << it->get_bin() << endl;
+    data_in << "mem load -filltype value -filldata " << it->get_bin()
+            << " -fillradix binary sim:/flagger/i_data(" << i++ << ")\n";
   }
 
   // close file
-  sorted.close();
-  if (sorted.fail()) {
-    cerr << "Error: could not save sorted columns to file.\n";
+  data_in.close();
+  if (data_in.fail()) {
+    cerr << "Error: could not save columns to file.\n";
     return 1;
   }
 
