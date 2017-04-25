@@ -65,9 +65,9 @@ architecture a of icf_processor is
     --type spp_array is array 15 downto 0 of std_logic_vector(31 downto 0); -- put in a package file
     type state_machine is (s0, s1, s2, s3, s4);
 
-    signal si_bus           : spp_array;
-    signal so_bus           : spp_array;
-    signal fo_bus           : spp_array;
+    signal si_bus           : spp_array; -- input to sorter
+    signal so_bus           : spp_array; -- output from sorter
+    signal fo_bus           : spp_array; -- output from flagger
     signal state            : state_machine; -- state of processor (state machine)
     signal ci_enable        : std_logic; -- counter enable
     signal co_value         : std_logic_vector(7 downto 0); -- TODO check this if i need this many bits (xFF) -  do i not only need 80 bits as this is the max nr of clock cycles for each data processor?
@@ -105,8 +105,8 @@ begin
     begin
         if i_reset = '1' then
             -- reset
-            ci_enable    <= '0';
-            state           <= s0;
+            ci_enable		<= '0';
+            state		<= s0;
         elsif rising_edge(i_Clock_160MHz) and i_enable = '1' then
             if state = s0 then
                 -- state 0 -- read in data and assemble the spp_array
@@ -138,28 +138,28 @@ begin
                 -- state 1 - sort
                 -- pass data to the sorter and start counter
    		state <= s2;
-            elsif state = s2 then
-                -- state 2 - flag
-		state <= s3;
+            	elsif state = s2 then
+                	-- state 2 - flag
+			state <= s3;
 		elsif state = s3 then
-            -- disassemble array of spps as they are written out
-            o_bus           <= fo_bus(0) &
-                               fo_bus(1) &
-                               fo_bus(2) &
-                               fo_bus(3) &
-                               fo_bus(4) &
-                               fo_bus(5) &
-                               fo_bus(6) &
-                               fo_bus(7) &
-                               fo_bus(8) &
-                               fo_bus(9) &
-                               fo_bus(10) &
-                               fo_bus(11) &
-                               fo_bus(12) &
-                               fo_bus(13) &
-                               fo_bus(14) &
-                               fo_bus(15);
-		state <= s4;
+            		-- disassemble array of spps as they are written out
+			o_bus           <= fo_bus(0) &
+                	               fo_bus(1) &
+                	               fo_bus(2) &
+                	               fo_bus(3) &
+                	               fo_bus(4) &
+                	               fo_bus(5) &
+                	               fo_bus(6) &
+                	               fo_bus(7) &
+                	               fo_bus(8) &
+                	               fo_bus(9) &
+                	               fo_bus(10) &
+                	               fo_bus(11) &
+                	               fo_bus(12) &
+                	               fo_bus(13) &
+                	               fo_bus(14) &
+                	               fo_bus(15);
+			state <= s4; -- change to state 4
 		end if;
         end if;
     end process;
