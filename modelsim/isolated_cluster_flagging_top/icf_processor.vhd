@@ -45,6 +45,7 @@ architecture a of icf_processor is
             clk             	: in	std_logic;
             rst             	: in	std_logic;
       	    odd         	: in	std_logic; -- 1 odd/even 0 even/odd
+	    en			: in	std_logic;
       	    i_data       	: in	spp_array;
       	    o_data		: out	spp_array
         );
@@ -54,6 +55,7 @@ architecture a of icf_processor is
     	port(
     		rst 			: in	std_logic;
        		clk			: in 	std_logic;
+		en			: in 	std_logic;
        		i_data			: in 	spp_array;
        		o_data			: out 	spp_array
     	);
@@ -65,13 +67,15 @@ architecture a of icf_processor is
     --type spp_array is array 15 downto 0 of std_logic_vector(31 downto 0); -- put in a package file
     type state_machine is (s0, s1, s2, s3, s4);
 
+    signal s_en		    : std_logic; -- sorter enable
+    signal s_odd       	    : std_logic; -- odd/even or even/odd
     signal si_bus           : spp_array; -- input to sorter
     signal so_bus           : spp_array; -- output from sorter
+    signal f_en		    : std_logic; -- flagger enable
     signal fo_bus           : spp_array; -- output from flagger
     signal state            : state_machine; -- state of processor (state machine)
     signal ci_enable        : std_logic; -- counter enable
     signal co_value         : std_logic_vector(7 downto 0); -- TODO check this if i need this many bits (xFF) -  do i not only need enough to count to 80 (7 bit) as this is the max nr of clock cycles for each data processor?
-    signal sorter_odd       : std_logic; -- odd/even or even/odd
 
 begin
 
@@ -87,7 +91,8 @@ begin
     port map(
         i_Clock_160MHz,
         i_reset,
-        sorter_odd,
+        s_odd,
+	s_en,
         si_bus,
         so_bus
     );
@@ -96,6 +101,7 @@ begin
     	port map(
     		i_reset,
        		i_Clock_160MHz,
+		f_en,
        		so_bus,
        		fo_bus
     	);
@@ -129,7 +135,7 @@ begin
 	               	si_bus(15)	<= "00000000" & i_bus(23 downto 0);
                     	-- start the clock
                     	ci_enable <= '1';
-		elsif co_value = x"01" then
+		elsif co_value = x"02" then
 	       		si_bus(16)	<= "00000000" & i_bus(383 downto 360);
 	               	si_bus(17)	<= "00000000" & i_bus(359 downto 336);
 	               	si_bus(18)	<= "00000000" & i_bus(335 downto 312);
@@ -146,7 +152,7 @@ begin
 	               	si_bus(29)	<= "00000000" & i_bus(71 downto 48);
 	               	si_bus(30)	<= "00000000" & i_bus(47 downto 24);
 	               	si_bus(31)	<= "00000000" & i_bus(23 downto 0);
-		elsif co_value = x"02" then
+		elsif co_value = x"03" then
 	       		si_bus(32)	<= "00000000" & i_bus(383 downto 360);
 	               	si_bus(33)	<= "00000000" & i_bus(359 downto 336);
 	               	si_bus(34)	<= "00000000" & i_bus(335 downto 312);
@@ -163,7 +169,7 @@ begin
 	               	si_bus(45)	<= "00000000" & i_bus(71 downto 48);
 	               	si_bus(46)	<= "00000000" & i_bus(47 downto 24);
 	               	si_bus(47)	<= "00000000" & i_bus(23 downto 0);
-                elsif co_value = x"03" then
+                elsif co_value = x"04" then
 	       		si_bus(48)	<= "00000000" & i_bus(383 downto 360);
 	               	si_bus(49)	<= "00000000" & i_bus(359 downto 336);
 	               	si_bus(50)	<= "00000000" & i_bus(335 downto 312);
@@ -183,16 +189,28 @@ begin
                     	-- all 4 frames have been read in, go to state 1
                     	state <= s1;
                 end if;
-            elsif state = s1 then
-                -- state 1 - sort
-                -- pass data to the sorter and start counter
-   		state <= s2;
+            	elsif state = s1 then
+                	-- state 1 - sort
+                	-- pass data to the sorter and wait 64 clock cycles for it to return the sorted data       			
+			if co_value = x"44" then
+				s_en 	<= '0';
+   				state 	<= s2;
+			elsif to_integer(unsigned(co_value)) mod 2 = 0 then
+			--even pass
+				s_odd 		<= '0';
+				s_en		<= '1';
+			else
+			--odd pass
+				s_odd 		<= '1';
+				s_en		<= '1';
+			end if;
             	elsif state = s2 then
                 	-- state 2 - flag
-			
-			state <= s3;
+			f_en	<= '1';
+			state 	<= s3;
 		elsif state = s3 then
             		-- disassemble array of spps as they are written out
+			f_en	<= '0';
 		       	if co_value = x"4D" then
 		        	o_bus <= fo_bus(0)  &
 			                fo_bus(1)  &
