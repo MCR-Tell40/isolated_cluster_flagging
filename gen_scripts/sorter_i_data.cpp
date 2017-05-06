@@ -15,8 +15,8 @@ using namespace std;
 class column // class for bit 8 to bit 13
 {
 private:
-  long int limit{64}; // maximum value of column
-  long int value;     // column address
+  long int limit{1024}; // maximum value of column
+  long int value;       // column address
 
 public:
   // constructor
@@ -36,12 +36,9 @@ string column::get_bin() const {
   string binstr;
   long int temp{value};
   long int mod;
-  out << "0000" // 31-14
-      << "0000" //
-      << "0000" //
-      << "0000" //
-      << "00";  //
-  for (int i{0}; i < 6; i++) {
+  out << "0000" // 31-24
+      << "0000";
+  for (int i{0}; i < 10; i++) {
     mod = fmod(temp, 2);
     temp = floor(temp / 2);
     bin << mod;
@@ -50,7 +47,7 @@ string column::get_bin() const {
   binstr = bin.str();
   reverse(binstr.begin(), binstr.end());
   out << binstr;
-  out << "00000011"; // 7-0
+  out << "00000000000011"; // 7-0
   // 1s to avoid being flagged as edge cases, even when addr is 000000
   return out.str();
 }
@@ -100,7 +97,7 @@ int main() {
   int i = 0;
   for (auto it = columns.begin(); it != columns.end(); it++) {
     unsorted << "mem load -filltype value -filldata " << it->get_bin()
-             << " -fillradix binary sim:/flagger/i_data(" << i++ << ")\n";
+             << " -fillradix binary sim:/sorter/i_data(" << i++ << ")\n";
   }
 
   // close file

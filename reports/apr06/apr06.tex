@@ -1,0 +1,160 @@
+% LHCb VELO upgrade presentation for 06 April 2017
+% Topic:    Isolation flagging module progress
+% Author:   Dónal Murray
+% Date:     06 April 2017
+
+% $Header$
+\documentclass{beamer}
+\mode<presentation>
+\usefonttheme{professionalfonts}
+\setbeamertemplate{footline}[text line]{%
+  \parbox{\linewidth}{\vspace*{-22pt}\tiny\insertshortauthor}}
+\setbeamertemplate{navigation symbols}{} % remove beamer symbols
+
+\usepackage[english]{babel}
+\usepackage[utf8]{inputenc}
+\usepackage{times}
+\usepackage[T1]{fontenc}
+\usepackage{pgf}
+\usepackage{tikz}
+
+\usetikzlibrary{positioning,fit,calc}
+\tikzstyle{block} = [draw, rectangle, minimum height=3em, minimum width=7em]
+\tikzstyle{fifo} = [draw, rectangle, minimum height=8em, minimum width=7em]
+\tikzstyle{bigblock} = [draw, rectangle, minimum height=8em, minimum width=10em]
+
+\title[ICF Module]{Isolated Cluster Flagging Module}
+\subtitle{Progress Update}
+\author[Dónal Murray\hspace*{80pt}donal.murray@cern.ch]{Dónal Murray \\
+  \vskip7pt
+  \tiny{donal.murray@cern.ch}
+}
+\institute{}
+\date{06 April 2017}
+
+\pgfdeclareimage[height=1.5cm]{university-logo}{img/UoMlogo}
+\logo{\pgfuseimage{university-logo}}
+
+% $Document$
+\begin{document}
+
+{
+\setbeamertemplate{footline}{} % do not display footer on titlepage
+\begin{frame}
+  \titlepage
+\end{frame}
+}
+\addtocounter{framenumber}{-1} % do not count titlepage in slide count
+
+\begin{frame}{Presentation Overview}
+  \tableofcontents
+\end{frame}
+
+
+% Structuring a talk is a difficult task and the following structure
+% may not be suitable. Here are some rules that apply for this
+% solution:
+
+% - Exactly two or three sections (other than the summary).
+% - At *most* three subsections per section.
+% - Talk about 30s to 2min per frame. So there should be between about
+%   15 and 30 frames, all told.
+
+% - A conference audience is likely to know very little of what you
+%   are going to talk about. So *simplify*!
+% - In a 20min talk, getting the main ideas across is hard
+%   enough. Leave out details, even if it means being less precise than
+%   you think necessary.
+% - If you omit details that are vital to the proof/implementation,
+%   just say so once. Everybody will be happy with that.
+
+\section{Incorporation into the full AMC40 firmware}
+
+\begin{frame}{Incorporation into the full AMC40 Firmware}
+  \begin{itemize}
+    \item
+      Cloned the updated VELO24 branch
+      \begin{itemize}
+        \item
+          vhd file containing entity definition missing - the file is RAM\_ID\_DEMUX.vhd
+          in the specific velopix directory
+        \item
+          Copied over file again and compiled without any
+        \item
+          Would like to check this file is correct
+      \end{itemize}
+    \item
+      Currently redesigning the module to have constant timing
+    \end{itemize}
+\end{frame}
+
+\subsection{Position in firmware}
+
+\begin{frame}{Position in firmware}
+  \begin{itemize}
+    \item
+      Data processing block has changed since this module was designed
+      \begin{itemize}
+        \item
+          Original positioning needed to be changed because of the edge detectors in the post router
+        \item
+          The new position will be right at the start of the post router before the edge detectors
+        \item
+          The flagging bit is the MSB of each 32bit word, therefore taking input from inflactionary\_block
+      \end{itemize}
+    \end{itemize}
+\end{frame}
+
+\subsection{Timing}
+
+\begin{frame}{Timing}
+  \begin{itemize}
+    \item
+      Each data processor within the ICF block needs the following number of clock cycles per BCID:
+      \begin{itemize}
+        \item
+            1 clock cycle to check if it is empty (0 SPPs)
+        \item
+            4 clock cycles to read in the 4 512bit frames associated with the BCID
+        \item
+            65 clock cycles to sort the columns and flag isolated clusters
+        \item
+            4 clock cycles to write it out
+      \end{itemize}
+    \item
+      The BCID processing is parallelised within the ICF module
+    \item
+      16 rams could be processed every 229 clock cycles with 16 ICF modules
+  \end{itemize}
+\end{frame}
+
+
+\section*{Summary}
+
+\begin{frame}{Summary}
+
+  % Keep the summary as short as possible
+  \begin{itemize}
+  \item
+    New design to fit in with the post router
+  \item
+    Timing now constant in new design
+  \item
+    Testing new design in Modelsim
+  \end{itemize}
+
+  % Next steps
+  \vskip0pt plus.5fill
+  \begin{itemize}
+  \item
+    Outlook
+    \begin{itemize}
+    \item
+      Test the new top level in Modelsim
+    \item
+      Incorporate into the post router as a drop in module
+    \end{itemize}
+  \end{itemize}
+\end{frame}
+
+\end{document}
