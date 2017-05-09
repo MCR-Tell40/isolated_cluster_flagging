@@ -26,7 +26,7 @@ entity isolated_cluster_flagger_top is
         	i_sppram_id_dv 	    : in std_logic;
         	i_ram_counter       : in std_logic_vector(sppram_w_seg_size - 1 downto 0);
         	-- inflactionary_block interface
-        	i_infl_bus          : in std_logic_vector(511 downto 0); -- output of inflactionary_block
+        	i_bus          : in std_logic_vector(383 downto 0); -- output of inflactionary_block
 
         	--output
         	-- edge_detector interface
@@ -48,7 +48,7 @@ architecture a of isolated_cluster_flagger_top is
             i_enable            : in std_logic;
             i_sppram_id_dv 	: in std_logic;
             i_ram_counter       : in std_logic_vector(sppram_w_seg_size - 1 downto 0);
-            i_bus               : in std_logic_vector(511 downto 0);
+            i_bus               : in std_logic_vector(383 downto 0);
 
             o_enable            : out std_logic;
             o_sppram_id_dv 	: out std_logic;
@@ -72,7 +72,7 @@ begin
 			dp_i_enable(i),
 			i_sppram_id_dv,
 			i_ram_counter,
-            		i_infl_bus, -- shared input data pipe
+            		i_bus, -- shared input data pipe
 	
 			dp_o_enable(i),
 			o_sppram_id_dv,
@@ -82,9 +82,24 @@ begin
 	end generate;
 
     --passthrough stream--
-    o_sppram_id     <= i_sppram_id;
-    o_sppram_id_dv  <= i_sppram_id_dv;
-    o_ram_counter   <= i_ram_counter;
-    o_fifo_bus      <= i_infl_bus;
+    o_sppram_id     	<= i_sppram_id;
+    o_sppram_id_dv  	<= i_sppram_id_dv;
+    o_ram_counter   	<= i_ram_counter;
+    o_fifo_bus		<= "00000000" & i_bus(383 downto 360) &
+		         "00000000" & i_bus(359 downto 336) &
+	               	 "00000000" & i_bus(335 downto 312) &
+	               	 "00000000" & i_bus(311 downto 288) &
+	               	 "00000000" & i_bus(287 downto 264) &
+	               	 "00000000" & i_bus(263 downto 240) &
+	               	 "00000000" & i_bus(239 downto 216) &
+	               	 "00000000" & i_bus(215 downto 192) &
+	               	 "00000000" & i_bus(191 downto 168) &
+	               	 "00000000" & i_bus(167 downto 144) &
+	               	 "00000000" & i_bus(143 downto 120) &
+	               	 "00000000" & i_bus(119 downto 96)  &
+	               	 "00000000" & i_bus(95 downto 72)   &
+	               	 "00000000" & i_bus(71 downto 48)   &
+	               	 "00000000" & i_bus(47 downto 24)   &
+	               	 "00000000" & i_bus(23 downto 0);
     ----------------------
 end a;
