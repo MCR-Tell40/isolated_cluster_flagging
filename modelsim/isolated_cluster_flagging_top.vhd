@@ -58,11 +58,23 @@ architecture a of isolated_cluster_flagger_top is
         );
     end component icf_processor;
 
+    component counter is
+        port(
+            clk             : in 	std_logic;
+            rst             : in 	std_logic;
+            en	            : in 	std_logic;
+    	       o_count 		: out	std_logic_vector(7 downto 0)
+        );
+    end component;
+
     	-- SIGNALS
-    	signal dp_i_enable          : std_logic_vector(15 downto 0);
-    	signal dp_o_enable          : std_logic_vector(15 downto 0);
-	type t_sppram_id is array (15 downto 0) of natural range 0 to 15;
-	signal s_sppram_id          : t_sppram_id;
+    	   signal dp_i_enable          : std_logic_vector(15 downto 0);
+    	   signal dp_o_enable          : std_logic_vector(15 downto 0);
+	       type t_sppram_id is array (15 downto 0) of natural range 0 to 15;
+	       signal s_sppram_id          : t_sppram_id;
+           signal c_en                 : std_logic;
+           signal co_value             : std_logic_vector(7 downto 0);
+           signal processing           : std_logic; -- 0 for false, 1 for true
 
 begin
     --generate 16 processors -- their enable determines when they should interact with the shared pipes
@@ -85,6 +97,14 @@ begin
         );
 	end generate;
 
+    ICF_COUNTER: counter
+    port map(
+        i_Clock_160MHz,
+        i_reset,
+        c_en,
+        co_value
+    );
+
     --main control process
     process(i_Clock_160MHz, i_reset)
     begin
@@ -93,9 +113,62 @@ begin
             o_sppram_id_dv  <= '0';
             o_ram_counter   <= (others => '0');
             o_bus <= (others => '0');
+            processing      <= '0';
+        elsif processing = '0' then
+            --start the clock
+            c_en <= '0';
         elsif rising_edge(i_Clock_160MHz) then
+            if co_value = x"00" then
+                --enable processor:0
+                dp_i_enable(0) <= '1';
+            elsif co_value = x"04" then
+                --enable processor:1
+                dp_i_enable(1) <= '1';
+            elsif co_value = x"08" then
+                --enable processor:2
+                dp_i_enable(2) <= '1';
+            elsif co_value = x"0C" then
+                --enable processor:3
+                dp_i_enable(3) <= '1';
+            elsif co_value = x"10" then
+                --enable processor:4
+                dp_i_enable(4) <= '1';
+            elsif co_value = x"14" then
+                --enable processor:5
+                dp_i_enable(5) <= '1';
+            elsif co_value = x"18" then
+                --enable processor:6
+                dp_i_enable(6) <= '1';
+            elsif co_value = x"1C" then
+                --enable processor:7
+                dp_i_enable(7) <= '1';
+            elsif co_value = x"20" then
+                --enable processor:8
+                dp_i_enable(8) <= '1';
+            elsif co_value = x"24" then
+                --enable processor:9
+                dp_i_enable(9) <= '1';
+            elsif co_value = x"28" then
+                --enable processor:10
+                dp_i_enable(10) <= '1';
+            elsif co_value = x"2C" then
+                --enable processor:11
+                dp_i_enable(11) <= '1';
+            elsif co_value = x"30" then
+                --enable processor:12
+                dp_i_enable(12) <= '1';
+            elsif co_value = x"34" then
+                --enable processor:13
+                dp_i_enable(13) <= '1';
+            elsif co_value = x"38" then
+                --enable processor:14
+                dp_i_enable(14) <= '1';
+            elsif co_value = x"3B" then
+                --enable processor:15
+                dp_i_enable(15) <= '1';
+            end if;
 		--passthrough stream--
-		o_sppram_id     	<= i_sppram_id;
+		    o_sppram_id     	<= i_sppram_id;
     		o_sppram_id_dv  	<= i_sppram_id_dv;
     		o_ram_counter   	<= i_ram_counter;
     		o_bus		    <= "00000000" & i_bus(383 downto 360) &
