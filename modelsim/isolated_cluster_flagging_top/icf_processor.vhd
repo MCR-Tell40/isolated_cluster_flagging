@@ -18,7 +18,7 @@ entity icf_processor is
         i_enable            : in std_logic;
         i_sppram_id_dv 	    : in std_logic;
         i_ram_counter       : in std_logic_vector(sppram_w_seg_size - 1 downto 0);
-        i_bus               : in std_logic_vector(511 downto 0);
+        i_bus               : in std_logic_vector(383 downto 0);
 
         o_enable            : out std_logic;
         o_sppram_id_dv 	    : out std_logic;
@@ -65,16 +65,17 @@ architecture a of icf_processor is
     --signals--
     -----------
     --type spp_array is array 15 downto 0 of std_logic_vector(31 downto 0); -- put in a package file
-    type state_machine is (s0, s1, s2, s3, s4);
+    type state_machine is (s0, s1, s2, s3);
 
     signal s_en		    : std_logic; -- sorter enable
     signal s_odd       	    : std_logic; -- odd/even or even/odd
     signal si_bus           : spp_array; -- input to sorter
     signal so_bus           : spp_array; -- output from sorter
+    signal s_buffer	    : spp_array; -- signal buffer to take previous output and pass it as input -- do i need this?
     signal f_en		    : std_logic; -- flagger enable
     signal fo_bus           : spp_array; -- output from flagger
     signal state            : state_machine; -- state of processor (state machine)
-    signal ci_enable        : std_logic; -- counter enable
+    signal c_en		    : std_logic; -- counter enable
     signal co_value         : std_logic_vector(7 downto 0); -- TODO check this if i need this many bits (xFF) -  do i not only need enough to count to 80 (7 bit) as this is the max nr of clock cycles for each data processor?
 
 begin
@@ -83,7 +84,7 @@ begin
     port map(
         i_Clock_160MHz,
         i_reset,
-        ci_enable,
+        c_en,
         co_value
     );
 
@@ -110,13 +111,23 @@ begin
     process(i_Clock_160MHz, i_reset, i_enable)
     begin
         if i_reset = '1' then
-            -- reset
-            ci_enable		<= '0';
-            state		<= s0;
+            	-- reset
+        	o_enable            	<= '0';
+        	o_sppram_id_dv 	    	<= '0';
+        	o_ram_counter      	<= (others => '0');
+        	o_bus 			<= (others => '0');
+            	c_en			<= '0';
+	    	s_en			<= '0';
+		f_en			<= '0';
+            	state			<= s0;
+	elsif rising_edge(i_enable) then
+        	-- start the clock
+             	c_en <= '1';
         elsif rising_edge(i_Clock_160MHz) and i_enable = '1' then
             if state = s0 then
-                -- state 0 -- read in data and assemble the spp_array
-	       	if ci_enable = '0' then
+                -- state 0 -- read in data and assemble the spp_array - 4 clk cycles
+	       	if co_value = x"00" then
+			--co_count = x"00" - start of process
 	       		si_bus(0)	<= "00000000" & i_bus(383 downto 360);
 	               	si_bus(1)	<= "00000000" & i_bus(359 downto 336);
 	               	si_bus(2)	<= "00000000" & i_bus(335 downto 312);
@@ -133,9 +144,7 @@ begin
 	               	si_bus(13)	<= "00000000" & i_bus(71 downto 48);
 	               	si_bus(14)	<= "00000000" & i_bus(47 downto 24);
 	               	si_bus(15)	<= "00000000" & i_bus(23 downto 0);
-                    	-- start the clock
-                    	ci_enable <= '1';
-		elsif co_value = x"02" then
+		elsif co_value = x"01" then
 	       		si_bus(16)	<= "00000000" & i_bus(383 downto 360);
 	               	si_bus(17)	<= "00000000" & i_bus(359 downto 336);
 	               	si_bus(18)	<= "00000000" & i_bus(335 downto 312);
@@ -152,7 +161,7 @@ begin
 	               	si_bus(29)	<= "00000000" & i_bus(71 downto 48);
 	               	si_bus(30)	<= "00000000" & i_bus(47 downto 24);
 	               	si_bus(31)	<= "00000000" & i_bus(23 downto 0);
-		elsif co_value = x"03" then
+		elsif co_value = x"02" then
 	       		si_bus(32)	<= "00000000" & i_bus(383 downto 360);
 	               	si_bus(33)	<= "00000000" & i_bus(359 downto 336);
 	               	si_bus(34)	<= "00000000" & i_bus(335 downto 312);
@@ -169,7 +178,7 @@ begin
 	               	si_bus(45)	<= "00000000" & i_bus(71 downto 48);
 	               	si_bus(46)	<= "00000000" & i_bus(47 downto 24);
 	               	si_bus(47)	<= "00000000" & i_bus(23 downto 0);
-                elsif co_value = x"04" then
+                elsif co_value = x"03" then
 	       		si_bus(48)	<= "00000000" & i_bus(383 downto 360);
 	               	si_bus(49)	<= "00000000" & i_bus(359 downto 336);
 	               	si_bus(50)	<= "00000000" & i_bus(335 downto 312);
@@ -188,30 +197,39 @@ begin
 	               	si_bus(63)	<= "00000000" & i_bus(23 downto 0);
                     	-- all 4 frames have been read in, go to state 1
                     	state <= s1;
+			s_en	<= '1';
                 end if;
             	elsif state = s1 then
-                	-- state 1 - sort
-                	-- pass data to the sorter and wait 64 clock cycles for it to return the sorted data       			
+                	-- state 1 - sort (64 clk cycles)
+			-- enable sorter
+			--if co_value = x"04" then
+				--s_en	<= '1'; -- needs to be on x"03"
+		
 			if co_value = x"44" then
+                	-- wait 64 clock cycles for it to return the sorted data then change to next state       	
 				s_en 	<= '0';
+				f_en	<= '1';
    				state 	<= s2;
 			elsif to_integer(unsigned(co_value)) mod 2 = 0 then
+			-- give the sorter data with even flag
 			--even pass
 				s_odd 		<= '0';
 				s_en		<= '1';
 			else
+			-- give the sorter data with odd flag
 			--odd pass
 				s_odd 		<= '1';
 				s_en		<= '1';
 			end if;
             	elsif state = s2 then
                 	-- state 2 - flag
-			f_en	<= '1';
+			--f_en	<= '1'; -- needs to be clk x"44" to happen on x"45"
 			state 	<= s3;
 		elsif state = s3 then
             		-- disassemble array of spps as they are written out
 			f_en	<= '0';
-		       	if co_value = x"4D" then
+		       	if co_value = x"4C" then
+				--start assembling out bus at clk 76
 		        	o_bus <= fo_bus(0)  &
 			                fo_bus(1)  &
 			                fo_bus(2)  &
@@ -228,7 +246,7 @@ begin
 			                fo_bus(13) &
 			                fo_bus(14) &
 			                fo_bus(15);
-			elsif co_value = x"4E" then
+			elsif co_value = x"4D" then
 			        o_bus <= fo_bus(16) &
 			                fo_bus(17) &
 			                fo_bus(18) &
@@ -245,7 +263,7 @@ begin
 			                fo_bus(29) &
 			                fo_bus(30) &
 			                fo_bus(31);
-			elsif co_value = x"4F" then
+			elsif co_value = x"4E" then
 			        o_bus <= fo_bus(32) &
 			                fo_bus(33) &
 			                fo_bus(34) &
@@ -262,7 +280,7 @@ begin
 			                fo_bus(45) &
 			                fo_bus(46) &
 			                fo_bus(47);
-		        elsif co_value = x"50" then
+		        elsif co_value = x"4F" then
 			        o_bus <= fo_bus(48) &
 			                fo_bus(49) &
 			                fo_bus(50) &
@@ -279,8 +297,9 @@ begin
 			                fo_bus(61) &
 			                fo_bus(62) &
 			                fo_bus(63);
- 				-- change to state 4
-				state <= s4;
+ 				-- change to state 0 ready for clk 80
+				state 	<= s0;
+				c_en 	<= '0';
 			end if;
 		end if;
         end if;

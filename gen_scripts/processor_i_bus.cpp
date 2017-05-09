@@ -84,7 +84,7 @@ int main() {
   }
 
   // open output files
-  ofstream unsorted("processor_unsorted.tcl");
+  ofstream unsorted("processor_unsorted1.tcl");
   if (unsorted.fail()) {
     cerr << "Error: file failed to open.\n";
     return 1;
@@ -100,25 +100,25 @@ int main() {
   for (auto it = columns.begin(); it != columns.begin() + 15; it++) {
     unsorted << it->get_bin();
   }
-  unsorted << " 6.25ns\n";
+  unsorted << " 324ns\n";
 
   unsorted << "force -freeze sim:/icf_processor/i_bus ";
   for (auto it = columns.begin() + 15; it != columns.begin() + 31; it++) {
     unsorted << it->get_bin();
   }
-  unsorted << " 12.50ns\n";
+  unsorted << " 328ns\n";
 
   unsorted << "force -freeze sim:/icf_processor/i_bus ";
   for (auto it = columns.begin() + 31; it != columns.begin() + 47; it++) {
     unsorted << it->get_bin();
   }
-  unsorted << " 18.75ns\n";
+  unsorted << " 332ns\n";
 
   unsorted << "force -freeze sim:/icf_processor/i_bus ";
   for (auto it = columns.begin() + 47; it != columns.begin() + 63; it++) {
     unsorted << it->get_bin();
   }
-  unsorted << " 25.00ns\n";
+  unsorted << " 336ns\n";
 
   // close file
   unsorted.close();

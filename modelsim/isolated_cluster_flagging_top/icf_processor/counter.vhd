@@ -29,8 +29,10 @@ begin
 	begin
 		if (rst = '1') then
 			s_count	<= X"00";
+		elsif (rising_edge(clk) and en = '0') then
+			s_count 	<= X"00";
 		elsif (rising_edge(clk) and en = '1') then
-			if (s_count = X"FF") then -- 255 is too high, should be 80 (x50) -- but anyway doesn't need to be here!
+			if (s_count = X"50") then -- x"50" => 80 clock cycles have passed, reset to x"00"
 				s_count 	<= X"00";
 			else
 				s_count 	<= std_logic_vector(unsigned(s_count) + 1);
