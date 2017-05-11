@@ -1,3 +1,12 @@
+--icf_processor.vhd
+-- State machine to organise the running of the sorter and flagger using a counter
+-- 	s0 (4 clk cycles): read in the four packets which make up the datatrain
+--	s1 (n clk cycles): sort spatially by column number
+--	s2 (1 clk cycles): flag if sorting is complete
+--	s3 (4 clk cycles): write out the four packets
+-- Author D. Murray <donal.murray@cern.ch>
+-- May 2017
+
 library ieee;
 use ieee.std_logic_1164.all;
 use ieee.numeric_std.all;
@@ -6,8 +15,6 @@ library work;
 use work.AMC40_pack.all;
 use work.Constant_Declaration.all;
 use work.detector_constant_declaration.all;
-
-library work;
 use work.GDP_pack.all;
 
 entity icf_processor is
@@ -34,31 +41,31 @@ architecture a of icf_processor is
     --------------
     component counter is
         port(
-            clk             : in 	std_logic;
-            rst             : in 	std_logic;
-            en	            : in 	std_logic;
-	        o_count 		: out	std_logic_vector(7 downto 0)
+            clk             	: in 	std_logic;
+            rst             	: in 	std_logic;
+            en	            	: in 	std_logic;
+	    o_count 		: out	std_logic_vector(7 downto 0)
         );
     end component;
 
     component sorter is
-		port(
-            clk             : in	std_logic;
-            rst             : in	std_logic;
+	port(
+            clk             	: in	std_logic;
+            rst             	: in	std_logic;
       	    odd         	: in	std_logic; -- 1 odd/even 0 even/odd
-	        en			    : in	std_logic;
+	    en			: in	std_logic;
       	    i_data       	: in	spp_array;
-      	    o_data		    : out	spp_array
+      	    o_data		: out	spp_array
         );
     end component;
 
     component flagger is
     	port(
-    		rst 			: in	std_logic;
-       		clk			    : in 	std_logic;
-		    en			    : in 	std_logic;
-       		i_data			: in 	spp_array;
-       		o_data			: out 	spp_array
+    		rst 		: in	std_logic;
+       		clk		: in 	std_logic;
+		en		: in 	std_logic;
+       		i_data		: in 	spp_array;
+       		o_data		: out 	spp_array
     	);
     end component;
 
@@ -68,23 +75,22 @@ architecture a of icf_processor is
     --type spp_array is array 15 downto 0 of std_logic_vector(31 downto 0); -- put in a package file
     type state_machine is (s0, s1, s2, s3);
 
-    signal s_en		        : std_logic; -- sorter enable
-    signal s_odd       	    : std_logic; -- odd/even or even/odd
-    signal si_bus           : spp_array; -- input to sorter
-    signal so_bus           : spp_array; -- output from sorter
-    signal s_buffer	        : spp_array; --
-    signal f_en		        : std_logic; -- flagger enable
-    signal fo_bus           : spp_array; -- output from flagger
-    signal state            : state_machine; -- state of processor (state machine)
-    signal c_en		        : std_logic; -- counter enable
-    signal co_value         : std_logic_vector(7 downto 0);
+    signal s_en		        : std_logic; 		-- sorter enable
+    signal s_odd       	    	: std_logic; 		-- odd/even or even/odd
+    signal si_bus           	: spp_array; 		-- input to sorter
+    signal so_bus           	: spp_array; 		-- output from sorter
+    signal s_buffer	        : spp_array; 		-- takes sorter output and feeds it back as input
+    signal f_en		        : std_logic; 		-- flagger enable
+    signal fo_bus           	: spp_array; 		-- output from flagger
+    signal state            	: state_machine; 	-- state of processor (state machine)
+    signal c_en		        : std_logic; 		-- counter enable
+    signal co_value         	: std_logic_vector(7 downto 0); -- value of counter
+    
     -- signals to keep everything in sync
-    signal s_enable         : std_logic_vector(3 downto 0);
+    signal s_enable         	: std_logic_vector(3 downto 0);
     signal s_sppram_id_dv 	: std_logic_vector(3 downto 0);
-    type t_ram_counter is array (3 downto 0) of std_logic_vector(sppram_w_seg_size - 1 downto 0);
-    signal s_ram_counter    : t_ram_counter;
-    type t_sppram_id is array (3 downto 0) of natural range 0 to 15;
-    signal s_sppram_id        : t_sppram_id;
+    signal s_ram_counter    	: t_ram_counter; 	-- defined in AMC40_pack_p.vhd
+    signal s_sppram_id      	: t_sppram_id;		-- defined in AMC40_pack_p.vhd
 
 begin
 
@@ -101,7 +107,7 @@ begin
         i_Clock_160MHz,
         i_reset,
         s_odd,
-	    s_en,
+	s_en,
         si_bus,
         so_bus
     );
@@ -110,7 +116,7 @@ begin
     port map(
     	i_reset,
        	i_Clock_160MHz,
-		f_en,
+	f_en,
        	so_bus,
        	fo_bus
     );
@@ -120,26 +126,26 @@ begin
     begin
         if i_reset = '1' then
             	-- reset
-        	o_enable            	<= '0';
-        	o_sppram_id_dv 	    	<= '0';
-        	o_ram_counter      	    <= (others => '0');
+        	o_enable            		<= '0';
+        	o_sppram_id_dv 	    		<= '0';
+        	o_ram_counter      	    	<= (others => '0');
         	o_bus 			        <= (others => '0');
-            c_en			        <= '0';
+            	c_en			        <= '0';
 	    	s_en			        <= '0';
-		    f_en			        <= '0';
+		f_en				<= '0';
             state			        <= s0;
 	elsif rising_edge(i_enable) then
         	-- start the clock
-             	c_en <= '1';
+             	c_en 	<= '1';
         elsif rising_edge(i_Clock_160MHz) and i_enable = '1' then
             if state = s0 then
                 -- state 0 -- read in data and assemble the spp_array - 4 clk cycles
 	       	if co_value = x"00" then
 			--co_count = x"00" - start of process
-                s_enable(0)         <= i_enable;
-                s_sppram_id_dv(0)   <= i_sppram_id_dv;
-                s_ram_counter(0)    <= i_ram_counter;
-                s_sppram_id(0)      <= i_sppram_id;
+                	s_enable(0)         	<= i_enable;
+                	s_sppram_id_dv(0)   	<= i_sppram_id_dv;
+                	s_ram_counter(0)    	<= i_ram_counter;
+                	s_sppram_id(0)      	<= i_sppram_id;
 	       		si_bus(0)	<= "00000000" & i_bus(383 downto 360);
 	               	si_bus(1)	<= "00000000" & i_bus(359 downto 336);
 	               	si_bus(2)	<= "00000000" & i_bus(335 downto 312);
@@ -157,10 +163,10 @@ begin
 	               	si_bus(14)	<= "00000000" & i_bus(47 downto 24);
 	               	si_bus(15)	<= "00000000" & i_bus(23 downto 0);
 		elsif co_value = x"01" then
-                s_enable(1) <= i_enable;
-                s_sppram_id_dv(1)   <= i_sppram_id_dv;
-                s_ram_counter(1)    <= i_ram_counter;
-                s_sppram_id(1)      <= i_sppram_id;
+                	s_enable(1) 		<= i_enable;
+                	s_sppram_id_dv(1)   	<= i_sppram_id_dv;
+                	s_ram_counter(1)    	<= i_ram_counter;
+                	s_sppram_id(1)      	<= i_sppram_id;
 	       		si_bus(16)	<= "00000000" & i_bus(383 downto 360);
 	               	si_bus(17)	<= "00000000" & i_bus(359 downto 336);
 	               	si_bus(18)	<= "00000000" & i_bus(335 downto 312);
@@ -178,10 +184,10 @@ begin
 	               	si_bus(30)	<= "00000000" & i_bus(47 downto 24);
 	               	si_bus(31)	<= "00000000" & i_bus(23 downto 0);
 		elsif co_value = x"02" then
-                s_enable(2) <= i_enable;
-                s_sppram_id_dv(2)   <= i_sppram_id_dv;
-                s_ram_counter(2)    <= i_ram_counter;
-                s_sppram_id(2)      <= i_sppram_id;
+                	s_enable(2) 		<= i_enable;
+                	s_sppram_id_dv(2)   	<= i_sppram_id_dv;
+                	s_ram_counter(2)    	<= i_ram_counter;
+                	s_sppram_id(2)      	<= i_sppram_id;
 	       		si_bus(32)	<= "00000000" & i_bus(383 downto 360);
 	               	si_bus(33)	<= "00000000" & i_bus(359 downto 336);
 	               	si_bus(34)	<= "00000000" & i_bus(335 downto 312);
@@ -198,11 +204,11 @@ begin
 	               	si_bus(45)	<= "00000000" & i_bus(71 downto 48);
 	               	si_bus(46)	<= "00000000" & i_bus(47 downto 24);
 	               	si_bus(47)	<= "00000000" & i_bus(23 downto 0);
-        elsif co_value = x"03" then
-                s_enable(3) <= i_enable;
-                s_sppram_id_dv(3)   <= i_sppram_id_dv;
-                s_ram_counter(3)    <= i_ram_counter;
-                s_sppram_id(3)      <= i_sppram_id;
+        	elsif co_value = x"03" then
+                	s_enable(3) <= i_enable;
+                	s_sppram_id_dv(3)   <= i_sppram_id_dv;
+                	s_ram_counter(3)    <= i_ram_counter;
+                	s_sppram_id(3)      <= i_sppram_id;
 	       		si_bus(48)	<= "00000000" & i_bus(383 downto 360);
 	               	si_bus(49)	<= "00000000" & i_bus(359 downto 336);
 	               	si_bus(50)	<= "00000000" & i_bus(335 downto 312);
@@ -223,42 +229,42 @@ begin
                     	state <= s1;
 			s_en	<= '1';
                 end if;
-            	elsif state = s1 then
-                	-- state 1 - sort (64 clk cycles)
-			-- enable sorter
-			--if co_value = x"04" then
-				--s_en	<= '1'; -- needs to be on x"03"
+            elsif state = s1 then
+                -- state 1 - sort (64 clk cycles)
+		-- enable sorter
+		--if co_value = x"04" then
+			--s_en	<= '1'; -- needs to be on x"03"
 
-			if co_value = x"44" then
+		if co_value = x"44" then
                 	-- wait 64 clock cycles for it to return the sorted data then change to next state
-				s_en 	<= '0';
-				f_en	<= '1';
-   				state 	<= s2;
-			elsif to_integer(unsigned(co_value)) mod 2 = 0 then
+			s_en 	<= '0';
+			f_en	<= '1';
+   			state 	<= s2;
+		elsif to_integer(unsigned(co_value)) mod 2 = 0 then
 			-- give the sorter data with even flag
 			--even pass
-				s_odd 		<= '0';
-				s_en		<= '1';
-			else
+			s_odd 		<= '0';
+			s_en		<= '1';
+		else
 			-- give the sorter data with odd flag
 			--odd pass
-				s_odd 		<= '1';
-				s_en		<= '1';
+			s_odd 		<= '1';
+			s_en		<= '1';
 			end if;
-            	elsif state = s2 then
-                	-- state 2 - flag
-			--f_en	<= '1'; -- needs to be clk x"44" to happen on x"45"
-			state 	<= s3;
-		elsif state = s3 then
-            		-- disassemble array of spps as they are written out
-			f_en	<= '0';
-		       	if co_value = x"4C" then
-				--start assembling out bus at clk 76
-                    o_enable        <= s_enable(0);
-                    o_sppram_id_dv  <= s_sppram_id_dv(0);
-                    o_ram_counter   <= s_ram_counter(0);
-                    o_sppram_id     <= s_sppram_id(0);
-		        	o_bus <= fo_bus(0)  &
+            elsif state = s2 then
+                -- state 2 - flag
+		--f_en	<= '1'; -- needs to be clk x"44" to happen on x"45"
+		state 	<= s3;
+	    elsif state = s3 then
+            	-- disassemble array of spps as they are written out
+		f_en	<= '0';
+		if co_value = x"4C" then
+			--start assembling out bus at clk 76
+                    	o_enable        <= s_enable(0);
+                    	o_sppram_id_dv  <= s_sppram_id_dv(0);
+                    	o_ram_counter   <= s_ram_counter(0);
+                    	o_sppram_id     <= s_sppram_id(0);
+		        o_bus 		<= fo_bus(0)  &
 			                fo_bus(1)  &
 			                fo_bus(2)  &
 			                fo_bus(3)  &
@@ -274,12 +280,12 @@ begin
 			                fo_bus(13) &
 			                fo_bus(14) &
 			                fo_bus(15);
-			elsif co_value = x"4D" then
-                    o_enable <= s_enable(1);
-                    o_sppram_id_dv  <= s_sppram_id_dv(1);
-                    o_ram_counter   <= s_ram_counter(1);
-                    o_sppram_id     <= s_sppram_id(1);
-			        o_bus <= fo_bus(16) &
+		elsif co_value = x"4D" then
+                    	o_enable <= s_enable(1);
+                    	o_sppram_id_dv  <= s_sppram_id_dv(1);
+                    	o_ram_counter   <= s_ram_counter(1);
+                    	o_sppram_id     <= s_sppram_id(1);
+			o_bus 		<= fo_bus(16) &
 			                fo_bus(17) &
 			                fo_bus(18) &
 			                fo_bus(19) &
@@ -295,12 +301,12 @@ begin
 			                fo_bus(29) &
 			                fo_bus(30) &
 			                fo_bus(31);
-			elsif co_value = x"4E" then
-                    o_enable <= s_enable(2);
-                    o_sppram_id_dv  <= s_sppram_id_dv(2);
-                    o_ram_counter   <= s_ram_counter(2);
-                    o_sppram_id     <= s_sppram_id(2);
-			        o_bus <= fo_bus(32) &
+		elsif co_value = x"4E" then
+                    	o_enable <= s_enable(2);
+                    	o_sppram_id_dv  <= s_sppram_id_dv(2);
+                    	o_ram_counter   <= s_ram_counter(2);
+                    	o_sppram_id     <= s_sppram_id(2);
+			o_bus 		<= fo_bus(32) &
 			                fo_bus(33) &
 			                fo_bus(34) &
 			                fo_bus(35) &
@@ -316,12 +322,12 @@ begin
 			                fo_bus(45) &
 			                fo_bus(46) &
 			                fo_bus(47);
-		        elsif co_value = x"4F" then
-                    o_enable <= s_enable(3);
-                    o_sppram_id_dv  <= s_sppram_id_dv(3);
-                    o_ram_counter   <= s_ram_counter(3);
-                    o_sppram_id     <= s_sppram_id(3);
-			        o_bus <= fo_bus(48) &
+		elsif co_value = x"4F" then
+                    	o_enable <= s_enable(3);
+                    	o_sppram_id_dv  <= s_sppram_id_dv(3);
+                    	o_ram_counter   <= s_ram_counter(3);
+                    	o_sppram_id     <= s_sppram_id(3);
+			o_bus 		<= fo_bus(48) &
 			                fo_bus(49) &
 			                fo_bus(50) &
 			                fo_bus(51) &
@@ -337,11 +343,11 @@ begin
 			                fo_bus(61) &
 			                fo_bus(62) &
 			                fo_bus(63);
- 				-- change to state 0 ready for clk 80
-				state 	<= s0;
-				c_en 	<= '0';
-			end if;
+ 			-- change to state 0 ready for clk 80
+			state 	<= s0;
+			c_en 	<= '0';
 		end if;
+	    end if;
         end if;
     end process;
 end a;

@@ -1,3 +1,9 @@
+--sorter.vhd
+-- Bubble sort implementation in VHDL
+-- Sorts SPPs spatially by column and chip ID -- performs one switch and returns
+-- Author D. Murray <donal.murray@cern.ch>
+-- May 2017
+
 library ieee;
 use ieee.std_logic_1164.all;
 use ieee.numeric_std.all;
@@ -6,8 +12,6 @@ library work;
 use work.AMC40_pack.all;
 use work.Constant_Declaration.all;
 use work.detector_constant_declaration.all;
-
-library work;
 use work.GDP_pack.all;
 
 entity sorter is

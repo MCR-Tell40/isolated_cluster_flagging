@@ -85,7 +85,10 @@ constant deep_fifo_align : integer := 9;
 constant deep_fifo_info_data_dec : integer := deep_fifo_data_dec;
 
 -----------------------------> ICF ----------------------------------------------------------------------------------------------------
+-- Added by D. Murray <donal.murray@cern.ch> May 2017
 type spp_array is array (63 downto 0) of std_logic_vector(31 downto 0);
+type t_sppram_id is array (15 downto 0) of natural range 0 to 15;
+type t_ram_counter is array (3 downto 0) of std_logic_vector(sppram_w_seg_size - 1 downto 0);
 
 
 end package;
