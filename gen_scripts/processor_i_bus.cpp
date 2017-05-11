@@ -1,5 +1,6 @@
 // generate 4 datatrains of
 // Author: Dónal Murray <donal.murray@cern.ch>
+// adapted lazily from sorter data generator
 
 #include <algorithm>
 #include <cmath>    // fmod
