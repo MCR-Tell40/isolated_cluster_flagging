@@ -21,7 +21,6 @@ add wave -position end  sim:/isolated_cluster_flagging_top/o_sppram_id_dv
 
 #Signals
 add wave -noupdate -divider Signals
-add wave -position end  sim:/isolated_cluster_flagging_top/processing
 
 #Counter
 add wave -noupdate -divider Counter
@@ -42,6 +41,12 @@ force -freeze sim:/isolated_cluster_flagging_top/i_Clock_160MHz 1 0, 0 {2000 ps}
 # reset
 force -freeze sim:/isolated_cluster_flagging_top/i_reset 1 0
 force -freeze sim:/isolated_cluster_flagging_top/i_reset 0 1
+
+# set number of SPPs to max (199)
+force -freeze sim:/isolated_cluster_flagging_top/i_ram_counter "011000111" 0
+
+# set i_sppram_id_dv to 0
+force -freeze sim:/isolated_cluster_flagging_top/i_sppram_id_dv 0 0
 
 # load 383 bit trains, 1 per clock cycle
 source ../gen_scripts/top_raw.tcl

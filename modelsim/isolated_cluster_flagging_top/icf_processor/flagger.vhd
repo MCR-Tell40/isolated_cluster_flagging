@@ -56,7 +56,6 @@ begin
 				end loop;
 			end if;
 		end if;
-
 		-- pass internal register to the output
 		o_data	<= s_data;
 	end process;

@@ -70,17 +70,16 @@ architecture a of isolated_cluster_flagging_top is
     end component;
 
     	-- SIGNALS
-    	   signal dp_i_enable          : std_logic_vector(31 downto 0);
-    	   signal dp_o_enable          : std_logic_vector(31 downto 0);
+    	   signal dp_i_enable          : std_logic_vector(PROC_COUNT - 1 downto 0);
+    	   signal dp_o_enable          : std_logic_vector(PROC_COUNT - 1 downto 0);
 	   signal s_sppram_id          : t_sppram_id;
            signal c_en                 : std_logic;
            signal co_value             : std_logic_vector(7 downto 0);
-           signal processing           : std_logic;
 
 begin
     --generate 16 processors -- their enable determines when they should interact with the shared pipes
     	GEN_ICF_PROCESSOR :
-	for i in 0 to 31 generate
+	for i in 0 to PROC_COUNT - 1 generate
 	ICF_PROCESSORx: icf_processor
 		port map(
         		i_Clock_160MHz,
@@ -110,15 +109,20 @@ begin
     process(i_Clock_160MHz, i_reset)
     begin
         if i_reset = '1' then
-            --o_sppram_id     <= 0;
-            o_sppram_id_dv  <= '0';
-            o_ram_counter   <= (others => '0');
-            o_bus <= (others => '0');
-            processing      <= '0';
-        elsif processing = '0' then
-            --start the clock
+            o_sppram_id     	<= 0;
+            o_sppram_id_dv  	<= '0';
+            o_ram_counter   	<= (others => '0');
+            o_bus 		<= (others => '0');
+	    dp_i_enable		<= (others => '0');
+	    dp_o_enable		<= (others => '0');
             c_en <= '0';
         elsif rising_edge(i_Clock_160MHz) then
+        	if c_en = '0' then
+            		-- start the clock
+            		c_en <= '1';
+		end if;
+
+		-- processor assignment
 		if co_value = x"00" then
 			--enable processor:0
 			dp_i_enable(0) <= '1';
@@ -281,7 +285,9 @@ begin
 			dp_i_enable(0) <= '0';
 			c_en <= '0';
 		end if;
---		--passthrough stream -- just inflate i_bus by prepending 8 zeroes
+
+--		--passthrough stream -- just inflate i_bus by prepending 8 zeroes. 
+--		--To bypass module uncomment this and comment out the rest of the process until "elsif rising_edge(i_Clock_160MHz) then"
 --		o_sppram_id     	<= i_sppram_id;
 --    		o_sppram_id_dv  	<= i_sppram_id_dv;
 --    		o_ram_counter   	<= i_ram_counter;
@@ -301,8 +307,6 @@ begin
 --	               	 		"00000000" & i_bus(71 downto 48)   &
 --	               	 		"00000000" & i_bus(47 downto 24)   &
 --	               	 		"00000000" & i_bus(23 downto 0);
---    		----------------------
-
         end if;
     end process;
 end a;
