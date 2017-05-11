@@ -106,8 +106,8 @@ begin
     port map(
         i_Clock_160MHz,
         i_reset,
-        s_odd,
 	s_en,
+        s_odd,
         si_bus,
         so_bus
     );
@@ -205,10 +205,10 @@ begin
 	               	si_bus(46)	<= "00000000" & i_bus(47 downto 24);
 	               	si_bus(47)	<= "00000000" & i_bus(23 downto 0);
         	elsif co_value = x"03" then
-                	s_enable(3) <= i_enable;
-                	s_sppram_id_dv(3)   <= i_sppram_id_dv;
-                	s_ram_counter(3)    <= i_ram_counter;
-                	s_sppram_id(3)      <= i_sppram_id;
+                	s_enable(3) 		<= i_enable;
+                	s_sppram_id_dv(3)   	<= i_sppram_id_dv;
+                	s_ram_counter(3)    	<= i_ram_counter;
+                	s_sppram_id(3)      	<= i_sppram_id;
 	       		si_bus(48)	<= "00000000" & i_bus(383 downto 360);
 	               	si_bus(49)	<= "00000000" & i_bus(359 downto 336);
 	               	si_bus(50)	<= "00000000" & i_bus(335 downto 312);
@@ -226,16 +226,22 @@ begin
 	               	si_bus(62)	<= "00000000" & i_bus(47 downto 24);
 	               	si_bus(63)	<= "00000000" & i_bus(23 downto 0);
                     	-- all 4 frames have been read in, go to state 1
-                    	state <= s1;
+                    	state 	<= s1;
 			s_en	<= '1';
+			s_odd	<= '1';
                 end if;
             elsif state = s1 then
                 -- state 1 - sort (64 clk cycles)
 		-- enable sorter
-		--if co_value = x"04" then
-			--s_en	<= '1'; -- needs to be on x"03"
-
-		if co_value = x"44" then
+		if co_value = x"04" then
+			s_odd	<= '0';
+			s_en	<= '1';
+			so_bus	<= si_bus;
+		elsif co_value = x"05" then
+			-- second cycle of sorting, redirect output to input
+			s_odd	<= '1';
+			si_bus	<= so_bus;
+		elsif co_value = x"44" then
                 	-- wait 64 clock cycles for it to return the sorted data then change to next state
 			s_en 	<= '0';
 			f_en	<= '1';
@@ -243,23 +249,32 @@ begin
 		elsif to_integer(unsigned(co_value)) mod 2 = 0 then
 			-- give the sorter data with even flag
 			--even pass
-			s_odd 		<= '0';
-			s_en		<= '1';
+			so_bus 	<= si_bus;
+			s_odd 	<= '0';
 		else
 			-- give the sorter data with odd flag
 			--odd pass
-			s_odd 		<= '1';
-			s_en		<= '1';
-			end if;
+			so_bus 	<= si_bus;
+			s_odd 	<= '1';
+		end if;
+		--s_odd 	<= NOT s_odd;
+		--si_bus 	<= so_bus;
+		if co_value = x"44" then
+                	-- wait 64 clock cycles for it to return the sorted data then change to next state
+			s_en 	<= '0';
+			f_en	<= '1';
+   			state 	<= s2;
+		end if;
             elsif state = s2 then
                 -- state 2 - flag
 		--f_en	<= '1'; -- needs to be clk x"44" to happen on x"45"
+	   	if to_integer(unsigned(i_ram_counter)) > MAX_COUNT then
 		state 	<= s3;
 	    elsif state = s3 then
             	-- disassemble array of spps as they are written out
 		f_en	<= '0';
-		if co_value = x"4C" then
-			--start assembling out bus at clk 76
+		if co_value = x"4B" then
+			--start assembling out bus at clk 75
                     	o_enable        <= s_enable(0);
                     	o_sppram_id_dv  <= s_sppram_id_dv(0);
                     	o_ram_counter   <= s_ram_counter(0);
@@ -280,7 +295,7 @@ begin
 			                fo_bus(13) &
 			                fo_bus(14) &
 			                fo_bus(15);
-		elsif co_value = x"4D" then
+		elsif co_value = x"4C" then
                     	o_enable <= s_enable(1);
                     	o_sppram_id_dv  <= s_sppram_id_dv(1);
                     	o_ram_counter   <= s_ram_counter(1);
@@ -301,7 +316,7 @@ begin
 			                fo_bus(29) &
 			                fo_bus(30) &
 			                fo_bus(31);
-		elsif co_value = x"4E" then
+		elsif co_value = x"4D" then
                     	o_enable <= s_enable(2);
                     	o_sppram_id_dv  <= s_sppram_id_dv(2);
                     	o_ram_counter   <= s_ram_counter(2);
@@ -322,7 +337,7 @@ begin
 			                fo_bus(45) &
 			                fo_bus(46) &
 			                fo_bus(47);
-		elsif co_value = x"4F" then
+		elsif co_value = x"4E" then
                     	o_enable <= s_enable(3);
                     	o_sppram_id_dv  <= s_sppram_id_dv(3);
                     	o_ram_counter   <= s_ram_counter(3);
@@ -349,5 +364,7 @@ begin
 		end if;
 	    end if;
         end if;
+	s_buffer 	<= so_bus; -- redirect output of sorter to buffer
+	end if;
     end process;
 end a;
