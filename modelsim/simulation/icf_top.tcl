@@ -28,11 +28,20 @@ add wave -position end  sim:/isolated_cluster_flagging_top/c_en
 add wave -position end  sim:/isolated_cluster_flagging_top/co_value
 
 #Data processors
-add wave -noupdate -divider Data\ Processors
+add wave -noupdate -divider ICF\ Processors
 add wave -position end  sim:/isolated_cluster_flagging_top/dp_i_enable
 add wave -position end  sim:/isolated_cluster_flagging_top/dp_o_enable
 add wave -position end  sim:/isolated_cluster_flagging_top/s_sppram_id
 
+add wave -noupdate -divider ICF\ Processor:0
+add wave -position end  sim:/isolated_cluster_flagging_top/GEN_ICF_PROCESSOR(0)/ICF_PROCESSORx/i_bus
+add wave -position end  sim:/isolated_cluster_flagging_top/GEN_ICF_PROCESSOR(0)/ICF_PROCESSORx/si_bus
+add wave -position end  sim:/isolated_cluster_flagging_top/GEN_ICF_PROCESSOR(0)/ICF_PROCESSORx/o_bus
+
+add wave -noupdate -divider ICF\ Processor:1
+add wave -position end  sim:/isolated_cluster_flagging_top/GEN_ICF_PROCESSOR(1)/ICF_PROCESSORx/i_bus
+add wave -position end  sim:/isolated_cluster_flagging_top/GEN_ICF_PROCESSOR(1)/ICF_PROCESSORx/si_bus
+add wave -position end  sim:/isolated_cluster_flagging_top/GEN_ICF_PROCESSOR(1)/ICF_PROCESSORx/o_bus
 
 
 # start clock
@@ -51,4 +60,4 @@ force -freeze sim:/isolated_cluster_flagging_top/i_sppram_id_dv 0 0
 # load 383 bit trains, 1 per clock cycle
 source ../gen_scripts/top_raw.tcl
 
-run 10000
+run 4000
