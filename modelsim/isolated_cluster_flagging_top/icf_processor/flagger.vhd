@@ -1,3 +1,8 @@
+--flagger.vhd
+-- Checks if sorting is complete, flags isolated SPPs if neighbouring columns have no hits
+-- Author D. Murray <donal.murray@cern.ch>
+-- May 2017
+
 library ieee;
 use ieee.std_logic_1164.all;
 use ieee.numeric_std.all;
@@ -6,8 +11,6 @@ library work;
 use work.AMC40_pack.all;
 use work.Constant_Declaration.all;
 use work.detector_constant_declaration.all;
-
-library work;
 use work.GDP_pack.all;
 
 entity flagger is
@@ -53,7 +56,6 @@ begin
 				end loop;
 			end if;
 		end if;
-
 		-- pass internal register to the output
 		o_data	<= s_data;
 	end process;

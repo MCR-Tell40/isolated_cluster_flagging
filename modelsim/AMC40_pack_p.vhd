@@ -85,7 +85,19 @@ constant deep_fifo_align : integer := 9;
 constant deep_fifo_info_data_dec : integer := deep_fifo_data_dec;
 
 -----------------------------> ICF ----------------------------------------------------------------------------------------------------
-type spp_array is array (63 downto 0) of std_logic_vector(31 downto 0);
+-- Added by D. Murray <donal.murray@cern.ch> May 2017
+constant MAX_COUNT : integer := 128; -- maximum number of clock cycles available for the module -- must be a multiple of 4
+constant PROC_COUNT : integer := MAX_COUNT / 4; -- number of processors
+-- had to hard code the processor assignment in ICF_top anyway as I was short on time to update from 16 processors to 32 therefore this constant changes very little
+
+-- types for ICF
+-- datatrain, 384 bit input consists of 16 24bit SPPs. 
+--Pad each with 8 zeroes and read in the 4 packets required for all information about each BCID then put into this as 64 32bit SPPs (MSB of 32bit word is the flagging bit)
+type spp_array is array (63 downto 0) of std_logic_vector(31 downto 0); 
+
+-- for propagating signals through in the correct order to the edge detectors
+type t_sppram_id is array (PROC_COUNT - 1 downto 0) of natural range 0 to 15; 
+type t_ram_counter is array (3 downto 0) of std_logic_vector(sppram_w_seg_size - 1 downto 0);
 
 
 end package;

@@ -1,4 +1,4 @@
-// generate 4 datatrains of
+// generate 12 datatrains of 383 btis to test icf top
 // Author: Dónal Murray <donal.murray@cern.ch>
 // adapted lazily from sorter data generator
 
@@ -13,10 +13,10 @@
 
 using namespace std;
 
-class column // class for bit 8 to bit 13
+class column // class for bit 24 to 13
 {
 private:
-  long int limit{1024}; // maximum value of column
+  long int limit{1024}; // maximum value  (24 downto 13 ie less than 2^10)
   long int value;       // column address
 
 public:
@@ -65,8 +65,9 @@ int main() {
   column column_temp(rand());
   columns.push_back(column_temp);
 
-  // generate the rest
-  while (columns.size() != 64) {
+  // generate the rest (enough for 64*16 SPP trains ie fill all processors
+  // twice)
+  while (columns.size() != 1024) {
     flag = false;
     column column_temp(rand());
     // for (auto it = columns.begin(); it != columns.end(); it++) {
@@ -85,41 +86,25 @@ int main() {
   }
 
   // open output files
-  ofstream unsorted("processor_unsorted1.tcl");
+  ofstream unsorted("top_raw.tcl");
   if (unsorted.fail()) {
     cerr << "Error: file failed to open.\n";
     return 1;
   }
-  ofstream sorted("processor_sorted.dat");
+  ofstream sorted("top_sorted.dat");
   if (sorted.fail()) {
     cerr << "Error: file failed to open.\n";
     return 1;
   }
 
-  // write out columns to files in tcl format
-  unsorted << "force -freeze sim:/icf_processor/i_bus ";
-  for (auto it = columns.begin(); it != columns.begin() + 15; it++) {
-    unsorted << it->get_bin();
+  for (int i{0}; i < 1025; i++) {
+    // write out columns to files in tcl format
+    unsorted << "force -freeze sim:/isolated_cluster_flagging_top/i_bus ";
+    for (auto it = columns.begin() + i; it != columns.begin() + i + 15; it++) {
+      unsorted << it->get_bin();
+    }
+    unsorted << " " << i * 4 + 4 << "ns\n";
   }
-  unsorted << " 324ns\n";
-
-  unsorted << "force -freeze sim:/icf_processor/i_bus ";
-  for (auto it = columns.begin() + 15; it != columns.begin() + 31; it++) {
-    unsorted << it->get_bin();
-  }
-  unsorted << " 328ns\n";
-
-  unsorted << "force -freeze sim:/icf_processor/i_bus ";
-  for (auto it = columns.begin() + 31; it != columns.begin() + 47; it++) {
-    unsorted << it->get_bin();
-  }
-  unsorted << " 332ns\n";
-
-  unsorted << "force -freeze sim:/icf_processor/i_bus ";
-  for (auto it = columns.begin() + 47; it != columns.begin() + 63; it++) {
-    unsorted << it->get_bin();
-  }
-  unsorted << " 336ns\n";
 
   // close file
   unsorted.close();
