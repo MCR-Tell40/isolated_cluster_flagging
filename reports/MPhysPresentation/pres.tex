@@ -23,7 +23,7 @@
 \tikzstyle{fifo} = [draw, rectangle, minimum height=8em, minimum width=7em]
 \tikzstyle{bigblock} = [draw, rectangle, minimum height=8em, minimum width=10em]
 
-\title[ICF Module]{Isolated Cluster Flagging Module}
+\title[ICF Block]{Isolated Cluster Flagging}
 \subtitle{MPhys Presentation}
 \author[Dónal Murray\hspace*{80pt}donal.murray@cern.ch]{Dónal Murray \\
   \vskip7pt
@@ -32,7 +32,7 @@
 \institute{}
 \date{26 May 2017}
 
-\pgfdeclareimage[height=1.5cm]{university-logo}{figs/UoMlogo}
+\pgfdeclareimage[height=1cm]{university-logo}{figs/UoMlogo1}
 \logo{\pgfuseimage{university-logo}}
 
 % $Document$
@@ -76,117 +76,268 @@
 \begin{frame}{Introduction}
   \begin{itemize}
     \item
-      Cloned the updated VELO24 branch
-      \begin{itemize}
-        \item
-          vhd file containing entity definition missing - the file is RAM\_ID\_DEMUX.vhd
-          in the specific velopix directory
-        \item
-          Copied over file again and compiled without any
-        \item
-          Would like to check this file is correct
-      \end{itemize}
+      Algorithm development for the LHCb vertex locator upgrade
     \item
-      Currently redesigning the module to have constant timing
+      One semester MPhys project with Prof Chris Parkes and Dr Marco Gersabeck
+    \item
+      Majority of the project was spent learning VHDL and learning to run FPGA simulations for testing
     \end{itemize}
 \end{frame}
 
-\begin{frame}{Position in firmware}
+\subsection{LHCb experiment}
+%--------------------
+\begin{frame}{The LHCb experiment}
+  \begin{figure}
+    \begin{center}
+      \includegraphics[height=0.5\textheight]{figs/lhcb}
+    \end{center}
+    \vspace*{-0.5cm}
+  \end{figure}
   \begin{itemize}
     \item
-      Data processing block has changed since this module was designed
-      \begin{itemize}
-        \item
-          Original positioning needed to be changed because of the edge detectors in the post router
-        \item
-          The new position will be right at the start of the post router before the edge detectors
-        \item
-          The flagging bit is the MSB of each 32bit word, therefore taking input from inflactionary\_block
-      \end{itemize}
-    \end{itemize}
+      Investigating $b$ and $c$ quark physics
+    \item
+      Consists of multiple subdetectors
+    \item
+      Due to be upgraded during LS2
+  \end{itemize}
 \end{frame}
 
-\subsection{LHCb}
+\subsection{VELO upgrade}
+\begin{frame}{VELO upgrade}
+  \begin{figure}
+    \begin{center}
+      \includegraphics[height=0.3\textheight]{figs/module}
+    \end{center}
+    \vspace*{-0.5cm}
+  \end{figure}
+  \begin{itemize}
+    \item
+      52 modules in two arrays of 26 facing each other
+    \item
+      Pixel sensors
+    \item
+      Liquid carbon dioxide cooling system
+    \item
+      Data readout system
+  \end{itemize}
+\end{frame}
+
+\begin{frame}{Data readout}
+  \begin{figure}
+    \begin{center}
+      \includegraphics[height=0.5\textheight]{figs/data-readout-chain}
+    \end{center}
+    \vspace*{-0.5cm}
+  \end{figure}
+  \begin{itemize}
+    \item
+      Readout electronics and FPGA
+    \item
+      Within the FPGA as much processing as possible is done
+    \item
+      The ICF block lies within "Data Processing"
+  \end{itemize}
+\end{frame}
+
+
+%---------------------------------------------------------------------------
+\section{Isolated cluster flagging}
+%---------------------------------------------------------------------------
+\subsection{Concept}
 %--------------------
-\begin{frame}{Timing}
+\begin{frame}{Isolated cluster flagging}{Aims}
+  \begin{itemize}
+    \item
+      Clustering algorithm -- do as much as possible in FPGA
+    \item
+      Sort the incoming superpixel packets (SPPs)
+    \item
+      Identify SPPs which have no neighbours
+    \item
+      Flag and pass on to the next stage
+  \end{itemize}
+\end{frame}
+
+\begin{frame}{Isolated cluster flagging}{Block diagram}
+  \begin{figure}
+    \begin{center}
+      \includegraphics[height=0.5\textheight]{figs/icf-top}
+    \end{center}
+  \end{figure}
+\end{frame}
+
+\begin{frame}{Isolated cluster flagging}{Block diagram}
+  \begin{figure}
+    \begin{center}
+      \includegraphics[height=0.5\textheight]{figs/icf-processor}
+    \end{center}
+  \end{figure}
+\end{frame}
+
+\begin{frame}{Isolated cluster flagging}{Flagging}
+  \begin{figure}
+    \begin{center}
+      \includegraphics[height=0.5\textheight]{figs/Columns}
+    \end{center}
+    \vspace*{-0.5cm}
+  \end{figure}
+  \begin{itemize}
+    \item
+      The flagging algorithm identifies SPPs with no neighbours
+    \item
+      All comparisons are made simultaneously
+  \end{itemize}
+\end{frame}
+
+\begin{frame}{Isolated cluster flagging}{Timing}
   \begin{itemize}
     \item
       Each data processor within the ICF block needs the following number of clock cycles per BCID:
       \begin{itemize}
         \item
-            1 clock cycle to check if it is empty (0 SPPs)
+          4 clock cycles to read in the 4 384bit frames associated with the BCID
         \item
-            4 clock cycles to read in the 4 512bit frames associated with the BCID
+          65 clock cycles to sort the columns and flag isolated clusters
         \item
-            65 clock cycles to sort the columns and flag isolated clusters
-        \item
-            4 clock cycles to write it out
+          4 clock cycles to write it out
       \end{itemize}
     \item
       The BCID processing is parallelised within the ICF module
     \item
-      16 rams could be processed every 229 clock cycles with 16 ICF modules
+      At this rate, 32 million BCIDs could be processed per second
   \end{itemize}
 \end{frame}
 
-
-
-%---------------------------------------------------------------------------
-\section{The isolated cluster flagging block}
-%---------------------------------------------------------------------------
-\subsection{Generations of design}
+\subsection{Implementation}
 %--------------------
-\begin{frame}{Introduction}
+\begin{frame}{Isolated cluster flagging}{Implementation}
   \begin{itemize}
     \item
-      Cloned the updated VELO24 branch
+      Inherited a previous attempt at implementing the ICF block
       \begin{itemize}
-        \item
-          vhd file containing entity definition missing - the file is RAM\_ID\_DEMUX.vhd
-          in the specific velopix directory
-        \item
-          Copied over file again and compiled without any
-        \item
-          Would like to check this file is correct
+        \item Did not compile
+        \item Was not timing constant and dropped packets
       \end{itemize}
     \item
-      Currently redesigning the module to have constant timing
-    \end{itemize}
+      First rewrite from scratch: based on old design
+    \item
+      Gained developer access to the full firmware file
+    \item
+      Second rewrite from scratch: new design to fit up to date specification
+  \end{itemize}
+\end{frame}
+
+\subsection{Testing}
+%--------------------
+\begin{frame}{Testing}
+  \begin{itemize}
+    \item
+      Created C++ programs to generate test data
+      \begin{itemize}
+        \item Specific data format for each section
+        \item Programs output both input data and output data
+      \end{itemize}
+
+    \item
+      Created script files to automate signal assignment
+  \end{itemize}
+\end{frame}
+
+\begin{frame}{Results}{Processor}
+  \begin{figure}
+    \begin{center}
+      \includegraphics[height=0.6\textheight]{figs/proc-test-s01}
+    \end{center}
+  \end{figure}
+\end{frame}
+
+\begin{frame}{Results}{Processor}
+  \begin{figure}
+    \begin{center}
+      \includegraphics[height=0.6\textheight]{figs/proc-test-s23}
+    \end{center}
+  \end{figure}
+\end{frame}
+
+\begin{frame}{Results}{Top level}
+  \begin{figure}
+    \begin{center}
+      \includegraphics[height=0.6\textheight]{figs/top-test}
+    \end{center}
+  \end{figure}
 \end{frame}
 
 %---------------------------------------------------------------------------
-\section{Testing}
+\section{Summary}
 %---------------------------------------------------------------------------
-
-
-%---------------------------------------------------------------------------
-\section*{Summary}
-%---------------------------------------------------------------------------
-
 \begin{frame}{Summary}
-
-  % Keep the summary as short as possible
   \begin{itemize}
   \item
-    New design to fit in with the post router
+    Redesigned to interface with the new firmware modules
   \item
-    Timing now constant in new design
+    Block now timing constant and order-preserving
   \item
-    Testing new design in Modelsim
+    Tested all but top level in Modelsim
   \end{itemize}
+\end{frame}
 
-  % Next steps
-  \vskip0pt plus.5fill
+%\subsection{Future work}
+%--------------------
+\begin{frame}{Future work}
   \begin{itemize}
-  \item
-    Outlook
+    \item
+    Test top level
     \begin{itemize}
-    \item
-      Test the new top level in Modelsim
-    \item
-      Incorporate into the post router as a drop in module
+      \item Ensure no clock cycles are wasted
+      \item Ensure no pileup of BCIDs
     \end{itemize}
+    \item
+      Optimise number of processors
+      \begin{itemize}
+        \item
+          Previous research indicates 64 SPPs best cut off point
+        \item
+          16, 32 or 20 processors candidates for implementation
+      \end{itemize}
+    \item
+      Incorporate into the post router of the AMC40 firmware
+      \begin{itemize}
+        \item Working version of AMC40 firmware required
+      \end{itemize}
   \end{itemize}
+\end{frame}
+
+\section*{Questions}
+\begin{frame}{Questions}
+  \begin{itemize}
+    \item Any questions?
+  \end{itemize}
+\end{frame}
+
+\section*{Backup slides}
+\begin{frame}{Backup slides}{Sorter results}
+  \begin{figure}
+    \begin{center}
+      \includegraphics[height=0.6\textheight]{figs/sorter-test}
+    \end{center}
+  \end{figure}
+\end{frame}
+
+\begin{frame}{Backup slides}{Flagger results}
+  \begin{figure}
+    \begin{center}
+      \includegraphics[height=0.6\textheight]{figs/flagger-test}
+    \end{center}
+  \end{figure}
+\end{frame}
+
+\begin{frame}{Backup slides}{Top level test fail}
+  \begin{figure}
+    \begin{center}
+      \includegraphics[height=0.6\textheight]{figs/top-fail}
+    \end{center}
+  \end{figure}
 \end{frame}
 
 \end{document}
