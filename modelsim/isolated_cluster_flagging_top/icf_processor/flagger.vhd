@@ -23,7 +23,7 @@ entity flagger is
 	);
 end entity;
 
-architecture a of flagger is
+architecture flag_arch of flagger is
 	-- signals
 	signal s_data 		: spp_array;
 
@@ -37,14 +37,14 @@ begin
 				-- propagate first and last SPP - these are always edge cases, so not flagged
 				s_data(0) 				<= i_data(0);
 				s_data(63)				<= i_data(63);
-	
+
 				for i in 1 to 62 loop
 					-- if next spp is all zeroes, must be edge case, so don't flag
 					if (i_data(i+1) = x"00000000") then
 						s_data(i) <= i_data(i);
 					else
 						-- check if isolated by seeing if the columns to either side are empty
-						if (to_integer(unsigned(i_data(i)(13 downto 8))) - to_integer(unsigned(i_data(i-1)(13 downto 8))) > 1) and 
+						if (to_integer(unsigned(i_data(i)(13 downto 8))) - to_integer(unsigned(i_data(i-1)(13 downto 8))) > 1) and
 						   (to_integer(unsigned(i_data(i+1)(13 downto 8))) - to_integer(unsigned(i_data(i)(13 downto 8))) > 1) then
 							-- cluster is isolated, flag by setting the MSB to 1
 							s_data(i) <= i_data(i) or x"80000000";
@@ -59,4 +59,4 @@ begin
 		-- pass internal register to the output
 		o_data	<= s_data;
 	end process;
-end a;
+end flag_arch;

@@ -8,17 +8,17 @@ use ieee.std_logic_1164.all;
 use ieee.numeric_std.all;
 
 entity counter is
-	port(
+	port (
 		clk, rst, en	: in 	std_logic;
-		o_count 	: out	std_logic_vector(7 downto 0)
+		o_count 		: out	std_logic_vector(7 downto 0)
 	);
 end entity;
 
-architecture a of counter is
+architecture count_arch of counter is
 	-- intermediate register
 	signal s_count	: 	std_logic_vector(7 downto 0);
 begin
-	o_count		<= s_count;
+	o_count			<= s_count;
 
 	process(clk, rst, en)
 	begin
@@ -33,4 +33,4 @@ begin
 			s_count 	<= std_logic_vector(unsigned(s_count) + 1);
 		end if;
 	end process;
-end a;
+end count_arch;

@@ -24,7 +24,7 @@ entity sorter is
 	);
 end entity;
 
-architecture a of sorter is
+architecture sort_arch of sorter is
 	signal s_data	: spp_array; -- intermediate shift register
 
 begin
@@ -70,4 +70,4 @@ begin
 		end if;
 		o_data <= s_data;
 	end process;
-end a;
+end sort_arch;
